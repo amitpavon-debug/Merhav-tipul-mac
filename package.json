@@ -1,0 +1,26 @@
+{
+  "name": "therapy-tracker",
+  "version": "1.0.0",
+  "description": "מרחב הטיפול - תוכנת תיעוד מפגשים",
+  "main": "main.js",
+  "author": "מרחב הטיפול",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win --x64"
+    "build:mac": "electron-builder --mac"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10"
+  },
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.therapy.tracker",
+    "productName": "מרחב הטיפול",
+    "directories": { "output": "dist" },
+    "win": { "target": "nsis", "icon": "assets/icon.ico" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true }
+  }
+}

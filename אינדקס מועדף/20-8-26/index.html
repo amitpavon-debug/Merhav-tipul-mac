@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'">
+<title>מרחב הטיפול</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;500;700&family=Heebo:wght@300;400;500&display=swap');
+:root{--bg:#0f0e0c;--surface:#1a1815;--surface2:#222018;--border:#2e2b24;--accent:#c8a96e;--accent2:#8fb8a0;--text:#e8e0d0;--text-dim:#8a8070;--text-muted:#5a5448;--danger:#c0614a;--radius:12px;}
+[data-theme="warm"]{--bg:#1c1410;--surface:#261e18;--surface2:#2e241c;--border:#3d2e22;--accent:#d4845a;--accent2:#a0c8a0;--text:#f0e0d0;--text-dim:#a08060;--text-muted:#6a5040;}
+[data-theme="light"]{--bg:#f5f2ee;--surface:#ffffff;--surface2:#f0ebe4;--border:#ddd6cc;--accent:#8b6840;--accent2:#5a9070;--text:#2a2018;--text-dim:#6a5a48;--text-muted:#9a8878;}
+[data-theme="green"]{--bg:#0d1410;--surface:#141e18;--surface2:#1a2620;--border:#243428;--accent:#6ab87a;--accent2:#8fb8a0;--text:#d8eed8;--text-dim:#6a9870;--text-muted:#3a6040;}
+[data-theme="blue"]{--bg:#0c0f18;--surface:#141820;--surface2:#1a2030;--border:#242a3a;--accent:#6a9fd4;--accent2:#8fb8c8;--text:#d8e4f0;--text-dim:#6a80a0;--text-muted:#3a4860;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden;transition:background .3s,color .3s;}
+.screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;}
+.screen.hidden{display:none;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:48px;width:420px;text-align:center;}
+.card-logo{font-family:'Frank Ruhl Libre',serif;font-size:32px;color:var(--accent);margin-bottom:8px;}
+.card-sub{color:var(--text-muted);font-size:14px;margin-bottom:32px;}
+.lock-input-wrap{position:relative;margin-bottom:16px;}
+.lock-input-wrap input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Heebo',sans-serif;font-size:16px;padding:14px 48px 14px 16px;text-align:center;letter-spacing:4px;outline:none;transition:border-color .2s;direction:ltr;}
+.lock-input-wrap input:focus{border-color:var(--accent);}
+.lock-input-wrap input::placeholder{letter-spacing:0;font-size:14px;}
+.lock-toggle{position:absolute;left:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;}
+.lock-error{color:var(--danger);font-size:13px;height:18px;margin-bottom:10px;}
+.lock-hint{color:var(--text-muted);font-size:12px;margin-top:16px;}
+/* Activation screen */
+.act-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px;width:480px;text-align:center;}
+.act-icon{font-size:52px;margin-bottom:12px;}
+.act-title{font-family:'Frank Ruhl Libre',serif;font-size:22px;color:var(--accent);margin-bottom:8px;}
+.act-sub{color:var(--text-muted);font-size:13px;margin-bottom:18px;line-height:1.7;}
+.contact-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:16px;text-align:right;}
+.contact-name{font-family:'Frank Ruhl Libre',serif;font-size:16px;color:var(--accent);margin-bottom:8px;}
+.contact-line{font-size:13px;color:var(--text-dim);margin-bottom:5px;direction:ltr;text-align:right;}
+.machine-id-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:5px;text-align:right;}
+.machine-id-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:13px;color:var(--accent);direction:ltr;letter-spacing:.1em;margin-bottom:14px;cursor:pointer;text-align:center;transition:border-color .2s;}
+.machine-id-box:hover{border-color:var(--accent);}
+/* App */
+#app{display:none;flex-direction:column;height:100vh;}
+#app.visible{display:flex;}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;-webkit-app-region:drag;}
+.header-left{-webkit-app-region:no-drag;display:flex;align-items:center;gap:12px;}
+.logo{font-family:'Frank Ruhl Libre',serif;font-size:20px;color:var(--accent);}
+.logo span{color:var(--text-muted);font-weight:300;font-size:16px;}
+.header-right{-webkit-app-region:no-drag;display:flex;gap:8px;align-items:center;}
+.trial-chip{display:inline-flex;align-items:center;background:rgba(200,169,110,.12);border:1px solid rgba(200,169,110,.25);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--accent);}
+.limit-bar{background:rgba(192,97,74,.1);border-bottom:1px solid rgba(192,97,74,.2);padding:8px 28px;font-size:12px;color:var(--danger);display:flex;align-items:center;gap:10px;}
+.app-body{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:290px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.sidebar-top{padding:16px;border-bottom:1px solid var(--border);}
+.sidebar-tabs{display:flex;border-bottom:1px solid var(--border);}
+.sidebar-tab{flex:1;padding:10px 6px;font-size:12px;font-family:'Heebo',sans-serif;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px;}
+.sidebar-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.sidebar-tab:hover:not(.active){color:var(--text);background:var(--surface2);}
+.tab-badge{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1px 6px;font-size:10px;}
+.sidebar-tab.active .tab-badge{background:rgba(200,169,110,.15);border-color:rgba(200,169,110,.3);color:var(--accent);}
+.clients-list{flex:1;overflow-y:auto;padding:6px;}
+.clients-list::-webkit-scrollbar{width:3px;}
+.clients-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.client-item{padding:12px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .12s;position:relative;}
+.client-item:hover{background:var(--surface2);}
+.client-item.active{background:rgba(200,169,110,.1);}
+.client-item.active::before{content:'';position:absolute;right:0;top:20%;height:60%;width:3px;background:var(--accent);border-radius:2px;}
+.client-item.archived{opacity:.55;}
+.client-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-family:'Frank Ruhl Libre',serif;font-size:14px;font-weight:700;color:var(--bg);flex-shrink:0;}
+.client-avatar.archived-av{background:linear-gradient(135deg,#4a4540,#6a6050);}
+.client-info{flex:1;min-width:0;}
+.client-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.client-meta{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.debt-dot{width:8px;height:8px;border-radius:50%;background:var(--danger);flex-shrink:0;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.view{display:none;flex:1;flex-direction:column;overflow-y:auto;}
+.view.active{display:flex;}
+.view::-webkit-scrollbar{width:5px;}
+.view::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:40px;}
+.welcome-icon{font-size:56px;opacity:.25;}
+.welcome h2{font-family:'Frank Ruhl Libre',serif;font-size:26px;font-weight:300;color:var(--text-dim);}
+.welcome p{color:var(--text-muted);font-size:14px;}
+.cv-header{padding:22px 28px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;}
+.cv-name{font-family:'Frank Ruhl Libre',serif;font-size:26px;font-weight:500;}
+.cv-sub{color:var(--text-muted);font-size:13px;margin-top:4px;}
+.cv-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+.stats-row{display:flex;gap:14px;padding:18px 28px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;flex:1;}
+.stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+.stat-value{font-family:'Frank Ruhl Libre',serif;font-size:24px;color:var(--accent);}
+.stat-unit{font-size:12px;color:var(--text-dim);margin-right:2px;}
+.sessions-area{padding:20px 28px;flex:1;}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.section-title{font-family:'Frank Ruhl Libre',serif;font-size:17px;font-weight:400;color:var(--text-dim);}
+.session-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;transition:border-color .15s;}
+.session-card:hover{border-color:var(--accent);}
+.sc-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.sc-left{display:flex;align-items:center;gap:10px;}
+.sc-num{width:30px;height:30px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-dim);flex-shrink:0;}
+.sc-date{font-size:13px;font-weight:500;}
+.sc-dur{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.sc-right{display:flex;align-items:center;gap:10px;}
+.tag-pill{font-size:11px;padding:3px 9px;border-radius:20px;background:rgba(143,184,160,.1);color:var(--accent2);border:1px solid rgba(143,184,160,.2);}
+.pay-badge{font-size:11px;padding:3px 9px;border-radius:20px;}
+.pay-paid{background:rgba(143,184,160,.1);color:var(--accent2);border:1px solid rgba(143,184,160,.2);}
+.pay-unpaid{background:rgba(192,97,74,.1);color:var(--danger);border:1px solid rgba(192,97,74,.2);}
+.expand-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;transition:transform .2s;}
+.expand-btn.open{transform:rotate(180deg);}
+.sc-body{display:none;padding:0 18px 16px;border-top:1px solid var(--border);}
+.sc-body.open{display:block;}
+.sc-tags{display:flex;flex-wrap:wrap;gap:5px;padding-top:14px;margin-bottom:10px;}
+.sc-tag{font-size:11px;padding:3px 9px;border-radius:20px;background:rgba(200,169,110,.08);color:var(--accent);border:1px solid rgba(200,169,110,.15);}
+.sc-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-top:12px;margin-bottom:5px;}
+.sc-text{font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;}
+.sc-text.empty{color:var(--text-muted);font-style:italic;}
+.sc-actions{display:flex;gap:6px;margin-top:14px;}
+.empty-state{text-align:center;padding:40px 24px;color:var(--text-muted);font-size:13px;}
+.cn-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin:0 28px 20px;}
+.cn-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:8px;}
+.cn-text{font-size:13px;line-height:1.7;color:var(--text-dim);white-space:pre-wrap;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:8px;font-size:13px;font-family:'Heebo',sans-serif;font-weight:500;cursor:pointer;transition:all .15s;border:1px solid transparent;}
+.btn-primary{background:var(--accent);color:var(--bg);}
+.btn-primary:hover{filter:brightness(1.1);}
+.btn-secondary{background:transparent;color:var(--text);border-color:var(--border);}
+.btn-secondary:hover{background:var(--surface2);}
+.btn-danger{background:transparent;color:var(--danger);border-color:rgba(192,97,74,.3);}
+.btn-danger:hover{background:rgba(192,97,74,.1);}
+.btn-archive{background:transparent;color:var(--text-muted);border-color:var(--border);font-size:12px;}
+.btn-archive:hover{background:var(--surface2);color:var(--text);}
+.btn-ghost{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:7px 10px;border-radius:8px;font-size:13px;font-family:'Heebo',sans-serif;transition:all .15s;display:flex;align-items:center;gap:5px;}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+.btn-sm{padding:5px 11px;font-size:12px;}
+/* Dropdown menu */
+.dropdown{position:relative;display:inline-flex;}
+.dropdown-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;min-width:160px;overflow:hidden;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.dropdown.open .dropdown-menu{display:block;}
+.dropdown-item{display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-family:'Heebo',sans-serif;color:var(--text-dim);cursor:pointer;transition:background .12s;white-space:nowrap;}
+.dropdown-item:hover{background:var(--surface2);color:var(--text);}
+/* Archive tag on client list item */
+.archive-tag{font-size:9px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--text-muted);flex-shrink:0;}
+.btn-full{width:100%;justify-content:center;padding:12px;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;width:540px;max-width:95vw;max-height:92vh;overflow-y:auto;animation:slideUp .22s ease;}
+.modal::-webkit-scrollbar{width:4px;}
+.modal::-webkit-scrollbar-thumb{background:var(--border);}
+@keyframes slideUp{from{transform:translateY(18px);opacity:0;}to{transform:none;opacity:1;}}
+.modal-header{padding:22px 26px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:'Frank Ruhl Libre',serif;font-size:19px;}
+.modal-close{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;padding:4px 8px;border-radius:6px;}
+.modal-close:hover{background:var(--surface2);color:var(--text);}
+.modal-body{padding:22px 26px;}
+.modal-footer{padding:14px 26px 22px;display:flex;gap:8px;justify-content:flex-end;}
+.form-group{margin-bottom:16px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+label{display:block;font-size:11px;font-weight:500;color:var(--text-dim);margin-bottom:7px;text-transform:uppercase;letter-spacing:.06em;}
+input[type=text],input[type=tel],input[type=email],input[type=number],input[type=date],input[type=password],select,textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Heebo',sans-serif;font-size:13px;padding:9px 12px;outline:none;transition:border-color .15s;direction:rtl;}
+input[type=date]{direction:ltr;text-align:right;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+textarea{resize:vertical;min-height:90px;line-height:1.6;}
+select option{background:var(--surface);}
+.tags-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.tag-chip{padding:5px 11px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);color:var(--text-dim);transition:all .12s;background:var(--surface2);user-select:none;}
+.tag-chip.on{background:rgba(200,169,110,.14);border-color:var(--accent);color:var(--accent);}
+.search-box{background:var(--surface2);border:1px solid transparent;border-radius:8px;color:var(--text);font-family:'Heebo',sans-serif;font-size:13px;padding:8px 12px;outline:none;width:100%;transition:border-color .15s;direction:rtl;}
+.search-box:focus{border-color:var(--accent);}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 20px;font-size:13px;z-index:9999;transition:transform .28s ease;box-shadow:0 8px 28px rgba(0,0,0,.5);pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.ok{border-color:var(--accent2);color:var(--accent2);}
+hr{border:none;border-top:1px solid var(--border);margin:14px 0;}
+.theme-picker{display:flex;gap:8px;margin-top:8px;}
+.theme-swatch{width:32px;height:32px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s;}
+.theme-swatch:hover{transform:scale(1.15);}
+.theme-swatch.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(200,169,110,.3);}
+.theme-swatch[data-t="dark"]{background:linear-gradient(135deg,#0f0e0c,#c8a96e);}
+.theme-swatch[data-t="warm"]{background:linear-gradient(135deg,#1c1410,#d4845a);}
+.theme-swatch[data-t="light"]{background:linear-gradient(135deg,#f5f2ee,#8b6840);}
+.theme-swatch[data-t="green"]{background:linear-gradient(135deg,#0d1410,#6ab87a);}
+.theme-swatch[data-t="blue"]{background:linear-gradient(135deg,#0c0f18,#6a9fd4);}
+.theme-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:10px;}
+
+/* ═══ LEGAL / CONSENT ═══ */
+.consent-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1100;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+.consent-overlay.hidden{display:none;}
+.consent-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;width:520px;max-width:95vw;overflow:hidden;animation:slideUp .28s ease;}
+.consent-header{padding:26px 30px 18px;border-bottom:1px solid var(--border);text-align:center;}
+.consent-logo{font-size:38px;margin-bottom:8px;}
+.consent-title{font-family:'Frank Ruhl Libre',serif;font-size:21px;color:var(--accent);margin-bottom:4px;}
+.consent-ver{font-size:11px;color:var(--text-muted);}
+.consent-body{padding:22px 30px;}
+.consent-intro{font-size:13px;line-height:1.8;color:var(--text-dim);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:13px 16px;margin-bottom:18px;}
+.consent-prompt{font-size:12px;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;}
+.consent-checks{display:flex;flex-direction:column;gap:9px;margin-bottom:20px;}
+.check-row{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 15px;cursor:pointer;transition:border-color .15s,background .15s;}
+.check-row:hover{border-color:var(--accent);}
+.check-row.checked{border-color:rgba(200,169,110,.4);background:rgba(200,169,110,.05);}
+.check-box{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;background:var(--bg);}
+.check-row.checked .check-box{background:var(--accent);border-color:var(--accent);}
+.check-tick{font-size:11px;color:var(--bg);opacity:0;transition:opacity .15s;}
+.check-row.checked .check-tick{opacity:1;}
+.check-text{font-size:13px;color:var(--text-dim);flex:1;line-height:1.5;}
+.check-link{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .15s;}
+.check-link:hover{border-bottom-color:var(--accent);}
+.consent-btn{width:100%;padding:13px;border-radius:10px;font-family:'Heebo',sans-serif;font-size:14px;font-weight:500;cursor:not-allowed;border:none;transition:all .2s;background:var(--border);color:var(--text-muted);}
+.consent-btn.ready{background:var(--accent);color:var(--bg);cursor:pointer;}
+.consent-btn.ready:hover{filter:brightness(1.1);}
+.consent-footer{padding:10px 30px 18px;text-align:center;}
+.consent-note{font-size:11px;color:var(--text-muted);line-height:1.6;}
+/* Doc viewer */
+.doc-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:1200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.doc-overlay.hidden{display:none;}
+.doc-modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;width:660px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;animation:slideUp .22s ease;}
+.doc-modal-header{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.doc-modal-title{font-family:'Frank Ruhl Libre',serif;font-size:17px;color:var(--accent);}
+.doc-modal-close{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;padding:4px 8px;border-radius:6px;line-height:1;}
+.doc-modal-close:hover{background:var(--surface2);color:var(--text);}
+.doc-modal-body{padding:24px 30px;overflow-y:auto;flex:1;font-size:13px;line-height:1.85;color:var(--text-dim);}
+.doc-modal-body::-webkit-scrollbar{width:4px;}
+.doc-modal-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.doc-modal-body h1{font-family:'Frank Ruhl Libre',serif;font-size:19px;color:var(--accent);margin-bottom:16px;}
+.doc-modal-body h2{font-family:'Frank Ruhl Libre',serif;font-size:14px;color:var(--text);margin:16px 0 7px;border-bottom:1px solid var(--border);padding-bottom:5px;}
+.doc-modal-body p{margin-bottom:7px;}
+.doc-modal-body .doc-section{margin-bottom:16px;}
+.doc-modal-body .doc-updated{font-size:11px;color:var(--text-muted);margin-bottom:18px;}
+.doc-modal-footer{padding:12px 22px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;flex-shrink:0;}
+/* Dropdown divider */
+.dropdown-divider{height:1px;background:var(--border);margin:4px 0;}
+
+/* Tier buttons */
+.tier-btn{flex:1;background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:2px;}
+.tier-btn:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.4);}
+.tier-btn.tier-start:hover{border-color:#6ab0f5;background:rgba(106,176,245,.07);}
+.tier-btn.tier-pro:hover{border-color:#c8a96e;background:rgba(200,169,110,.07);}
+.tier-btn.tier-unlimited:hover{border-color:#8fb8a0;background:rgba(143,184,160,.07);}
+.tier-btn-name{font-size:15px;font-weight:700;}
+.tier-btn-sub{font-size:10px;color:var(--text-muted);margin-bottom:4px;}
+.tier-divider{height:1px;background:var(--border);margin:6px 0;}
+.tier-price{font-size:17px;font-weight:600;}
+.tier-vat{font-size:10px;color:var(--text-muted);}
+.tier-upgrade{font-size:10px;color:var(--text-dim);margin-top:3px;padding-top:5px;border-top:1px dashed var(--border);}
+.tier-upgrade span{color:var(--text-muted);}
+.tier-btn-cta{font-size:10px;opacity:0;transition:opacity .2s;color:var(--text-dim);margin-top:4px;}
+.tier-btn:hover .tier-btn-cta{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- Lock -->
+<div class="screen" id="screen-lock">
+  <div class="card">
+    <div class="card-logo">🌿 מרחב הטיפול</div>
+    <div class="card-sub" id="lock-sub">הכנס/י סיסמה להמשך</div>
+    <div class="lock-input-wrap">
+      <input type="password" id="lock-input" placeholder="סיסמה" onkeydown="if(event.key==='Enter')lockSubmit()">
+      <button class="lock-toggle" onclick="toggleLockVis()">👁</button>
+    </div>
+    <div class="lock-error" id="lock-error"></div>
+    <button class="btn btn-primary btn-full" onclick="lockSubmit()" id="lock-btn">כניסה</button>
+    <div class="lock-hint" id="lock-hint"></div>
+    <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px;">
+      <button class="btn-ghost" style="margin:auto;font-size:12px;color:var(--text-muted)" onclick="openForgotModal()">שכחתי סיסמה</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen hidden" id="screen-trial-expired">
+  <div class="act-card">
+    <div class="act-icon">⏰</div>
+    <div class="act-title">תקופת הניסיון הסתיימה</div>
+    <div class="act-sub">30 ימי הניסיון הסתיימו.<br>שדרג כדי להמשיך להשתמש במרחב הטיפול:</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;justify-content:center">
+      <div class="tier-btn tier-start" onclick="selectTierFromExpiry('START')">
+        <div class="tier-btn-name" style="color:#6ab0f5">START</div>
+        <div class="tier-btn-sub">עד 10 מטופלים</div>
+        <div class="tier-divider"></div>
+        <div class="tier-price" style="color:#6ab0f5">₪790</div>
+        <div class="tier-vat">+ מע"מ</div>
+        <div class="tier-btn-cta">📱 שלח בוואטסאפ</div>
+      </div>
+      <div class="tier-btn tier-pro" onclick="selectTierFromExpiry('PRO')">
+        <div class="tier-btn-name" style="color:#c8a96e">PRO</div>
+        <div class="tier-btn-sub">עד 30 מטופלים</div>
+        <div class="tier-divider"></div>
+        <div class="tier-price" style="color:#c8a96e">₪1,490</div>
+        <div class="tier-vat">+ מע"מ</div>
+        <div class="tier-btn-cta">📱 שלח בוואטסאפ</div>
+      </div>
+      <div class="tier-btn tier-unlimited" onclick="selectTierFromExpiry('UNLIMITED')">
+        <div class="tier-btn-name" style="color:#8fb8a0">UNLIMITED</div>
+        <div class="tier-btn-sub">ללא הגבלה</div>
+        <div class="tier-divider"></div>
+        <div class="tier-price" style="color:#8fb8a0">₪2,100</div>
+        <div class="tier-vat">+ מע"מ</div>
+        <div class="tier-btn-cta">📱 שלח בוואטסאפ</div>
+      </div>
+    </div>
+    <div class="contact-card">
+      <div class="contact-name">עמית פבון</div>
+      <div class="contact-line">📞 054-991-3379</div>
+      <div class="contact-line" style="margin-bottom:0">✉️ Amit.Pavon@gmail.com</div>
+    </div>
+    <div class="machine-id-label">קוד המחשב שלך — לחץ להעתקה</div>
+    <div class="machine-id-box" id="expiry-machine-id" onclick="copyExpiryMachineId()">טוען...</div>
+    <div class="form-group" style="text-align:right;margin-bottom:8px;margin-top:12px">
+      <label>קוד הפעלה</label>
+      <input type="text" id="expiry-activation-input" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19" style="text-align:center;letter-spacing:3px;direction:ltr" oninput="autoFormatCode(this)">
+    </div>
+    <div class="lock-error" id="expiry-activation-error"></div>
+    <button class="btn btn-primary btn-full" onclick="activateFromExpiry()" style="margin-bottom:10px">✅ הפעל רישיון</button>
+    
+  </div>
+</div>
+
+<div class="screen hidden" id="screen-expired">
+  <div class="act-card">
+    <div class="act-icon" id="upgrade-icon">🔒</div>
+    <div class="act-title" id="upgrade-title">הרחב את הגרסה</div>
+    <div class="act-sub" id="upgrade-sub">שלח לספק את קוד המחשב שלך כדי לקבל קוד הפעלה:</div>
+    <!-- Tier buttons -->
+    <div id="tier-buttons" style="display:flex;gap:8px;margin-bottom:16px;justify-content:center">
+      <div class="tier-btn tier-start" id="tier-btn-START" onclick="selectTierAndWA('START')">
+        <div class="tier-btn-name" style="color:#6ab0f5">START</div>
+        <div class="tier-btn-sub"><strong>מתאים למטפלים בתחילת הדרך</strong> </div>
+        <div class="tier-btn-sub"> עד 10 מטופלים</div>
+        <div class="tier-divider"></div>
+        <div class="tier-price" style="color:#6ab0f5">₪690</div>
+        <div class="tier-vat">כולל מע"מ</div>
+        <div class="tier-btn-cta">📱 שלח בוואטסאפ</div>
+      </div>
+      <div class="tier-btn tier-pro" id="tier-btn-PRO" onclick="selectTierAndWA('PRO')">
+        <div class="tier-btn-name" style="color:#c8a96e">PRO</div>
+        <div class="tier-btn-sub"><strong>מתאים למטפלים עם קליניקה פעילה</strong> </div>
+        <div class="tier-btn-sub"> עד 30 מטופלים</div>
+        <div class="tier-divider"></div>
+        <div class="tier-price" style="color:#c8a96e">₪1,290</div>
+        <div class="tier-vat">כולל מע"מ</div>
+        <div class="tier-upgrade">הרחבה מ-<span dir="ltr">START</span>: <span>₪600</span> כולל מע"מ</div>
+        <div class="tier-btn-cta">📱 שלח בוואטסאפ</div>
+      </div>
+      <div class="tier-btn tier-unlimited" id="tier-btn-UNLIMITED" onclick="selectTierAndWA('UNLIMITED')">
+        <div class="tier-btn-name" style="color:#8fb8a0">UNLIMITED</div>
+        <div class="tier-btn-sub">מתאים לאירגונים גדולים</div>
+        <div class="tier-divider"></div>
+        <div class="tier-price" style="color:#8fb8a0">₪2,100</div>
+        <div class="tier-vat">כולל מע"מ</div>
+        <div class="tier-upgrade">הרחבה מ-<span dir="ltr">START</span>: <span>₪1410</span> כולל מע"מ</div>
+        <div class="tier-upgrade">הרחבה מ-<span dir="ltr">PRO</span>: <span>₪810</span> כולל מע"מ</div>
+        <div class="tier-btn-cta">📱 שלח בוואטסאפ</div>
+      </div>
+    </div>
+    <div class="contact-card">
+      <div class="contact-name">עמית פבון</div>
+      <div class="contact-line">📞 054-991-3379</div>
+      <div class="contact-line" style="margin-bottom:0">✉️ Amit.Pavon@gmail.com</div>
+    </div>
+    <div class="machine-id-label">קוד המחשב שלך — לחץ להעתקה</div>
+    <div class="machine-id-box" id="machine-id-display" onclick="copyMachineId()">טוען...</div>
+    <div class="form-group" style="text-align:right;margin-bottom:8px">
+      <label>קוד הפעלה</label>
+      <input type="text" id="activation-input" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19" style="text-align:center;letter-spacing:3px;direction:ltr" oninput="autoFormatCode(this)">
+    </div>
+    <div class="lock-error" id="activation-error"></div>
+    <button class="btn btn-primary btn-full" onclick="activateLicense()" style="margin-bottom:10px">✅ הפעל רישיון</button>
+    
+    <button class="btn btn-ghost btn-full" onclick="backToApp()" id="back-to-app-btn" style="font-size:12px">← חזרה לאפליקציה</button>
+  </div>
+</div>
+
+
+
+<!-- Export Password Modal -->
+<div class="consent-overlay hidden" id="overlay-export-pass" style="z-index:1200">
+  <div class="modal" style="width:400px">
+    <div class="modal-header">
+      <div class="modal-title">🔒 סיסמה לקובץ הגיבוי</div>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;line-height:1.7">הזן/י סיסמה שתגן על קובץ הגיבוי.<br>תזדקק/י לאותה סיסמה בעת הייבוא.</p>
+      <div class="form-group">
+        <input type="password" id="exp-pass1" placeholder="סיסמה לקובץ" style="margin-bottom:8px">
+        <input type="password" id="exp-pass2" placeholder="אישור סיסמה">
+      </div>
+      <div class="lock-error" id="exp-pass-error"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cancelExport()">ביטול</button>
+      <button class="btn btn-primary" onclick="confirmExport()">💾 שמור גיבוי</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Password Modal -->
+<div class="consent-overlay hidden" id="overlay-import-pass" style="z-index:1200">
+  <div class="modal" style="width:400px">
+    <div class="modal-header">
+      <div class="modal-title">🔑 סיסמת הקובץ</div>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;line-height:1.7">הזן/י את הסיסמה שבה הוצפן קובץ הגיבוי:</p>
+      <div class="form-group">
+        <input type="password" id="imp-pass" placeholder="סיסמת הקובץ">
+      </div>
+      <div class="lock-error" id="imp-pass-error"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cancelImport()">ביטול</button>
+      <button class="btn btn-primary" onclick="confirmImport()">📥 ייבא נתונים</button>
+    </div>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="consent-overlay hidden" id="overlay-forgot" style="z-index:1300" onclick="if(event.target===this)closeForgotModal()">
+  <div class="modal" style="width:460px">
+    <div class="modal-header">
+      <div class="modal-title">🔑 שכחתי סיסמה</div>
+      <button class="modal-close" onclick="closeForgotModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:20px;line-height:1.7">בחר/י אחת מהאפשרויות לשחזור גישה:</p>
+      <div id="forgot-options">
+        <div class="check-row" style="margin-bottom:10px;cursor:pointer" onclick="showRecoveryPanel('backup')">
+          <div style="font-size:22px">🔒</div>
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">סיסמת גיבוי חירום</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">אם הגדרת סיסמת גיבוי מראש — הנתונים ישמרו</div>
+          </div>
+        </div>
+        <div class="check-row" style="cursor:pointer" onclick="showRecoveryPanel('reset')">
+          <div style="font-size:22px">🔄</div>
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">איפוס דרך הספק</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">קבל קוד איפוס מהספק — ⚠️ הנתונים יימחקו</div>
+          </div>
+        </div>
+      </div>
+      <!-- Backup recovery panel -->
+      <div id="panel-backup" style="display:none">
+        <button class="btn-ghost" style="margin-bottom:14px;padding-right:0" onclick="showRecoveryPanel(null)">← חזרה</button>
+        <div class="form-group">
+          <label>סיסמת הגיבוי שלך</label>
+          <input type="password" id="r-backup-pass" placeholder="הכנס סיסמת גיבוי">
+        </div>
+        <div class="form-group">
+          <label>סיסמה חדשה</label>
+          <input type="password" id="r-new-pass1" placeholder="סיסמה חדשה">
+        </div>
+        <div class="form-group">
+          <label>אישור סיסמה חדשה</label>
+          <input type="password" id="r-new-pass2" placeholder="חזור על הסיסמה החדשה">
+        </div>
+        <div class="lock-error" id="r-backup-error"></div>
+        <button class="btn btn-primary btn-full" onclick="recoverWithBackup()">שחזר גישה</button>
+      </div>
+      <!-- Reset code panel -->
+      <div id="panel-reset" style="display:none">
+        <button class="btn-ghost" style="margin-bottom:14px;padding-right:0" onclick="showRecoveryPanel(null)">← חזרה</button>
+        <div style="background:rgba(192,97,74,.08);border:1px solid rgba(192,97,74,.2);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--danger);line-height:1.7">
+          ⚠️ האיפוס ימחק את כל הנתונים ולא ניתן לשחזרם לאחר מכן
+        </div>
+        <div class="mid-label" style="text-align:right;margin-bottom:5px">קוד המחשב שלך — שלח לספק</div>
+        <div class="mid-box" id="reset-machine-id" onclick="copyResetMachineId()" style="margin-bottom:14px">טוען...</div>
+        <a href="https://wa.me/972549913379" style="text-decoration:none;display:block;margin-bottom:14px">
+          <button class="btn btn-secondary btn-full">📱 שלח קוד בוואטסאפ לספק</button>
+        </a>
+        <div class="form-group">
+          <label>קוד איפוס (מעמית)</label>
+          <input type="text" id="r-reset-code" placeholder="XXXX-XXXX-XXXX-XXXX" style="direction:ltr;text-align:center;letter-spacing:2px" oninput="autoFormatResetCode(this)" maxlength="19">
+        </div>
+        <div class="form-group">
+          <label>סיסמה חדשה</label>
+          <input type="password" id="r-reset-pass1" placeholder="סיסמה חדשה">
+        </div>
+        <div class="form-group">
+          <label>אישור סיסמה חדשה</label>
+          <input type="password" id="r-reset-pass2" placeholder="חזור על הסיסמה החדשה">
+        </div>
+        <div class="lock-error" id="r-reset-error"></div>
+        <button class="btn btn-danger btn-full" onclick="resetWithCode()">⚠️ איפוס וסיסמה חדשה</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Backup Password Reminder -->
+<div class="consent-overlay hidden" id="overlay-backup-reminder" style="z-index:1050">
+  <div class="consent-card" style="width:480px">
+    <div class="consent-header">
+      <div class="consent-logo">🔒</div>
+      <div class="consent-title">הגדר סיסמת גיבוי</div>
+      <div class="consent-ver">מומלץ מאוד — עושים פעם אחת</div>
+    </div>
+    <div class="consent-body">
+      <div class="consent-intro" style="margin-bottom:16px">
+        אם תשכח את הסיסמה הראשית, <strong>הנתונים יאבדו לצמיתות</strong> — אין שחזור ללא סיסמה.<br><br>
+        סיסמת גיבוי מאפשרת לשחזר גישה ולשמור את כל הנתונים.
+      </div>
+      <div class="form-group">
+        <label>סיסמה ראשית (לאימות)</label>
+        <input type="password" id="rem-current" placeholder="הסיסמה שהגדרת">
+      </div>
+      <div class="form-group">
+        <label>סיסמת גיבוי חירום</label>
+        <input type="password" id="rem-backup" placeholder="סיסמה שנייה לשחזור">
+      </div>
+      <div class="form-group" style="margin-bottom:6px">
+        <label>אישור סיסמת גיבוי</label>
+        <input type="password" id="rem-backup2" placeholder="חזור על סיסמת הגיבוי">
+      </div>
+      <div class="lock-error" id="rem-error"></div>
+      <button class="btn btn-primary btn-full" onclick="saveReminderBackup()" style="margin-bottom:10px">שמור סיסמת גיבוי</button>
+      <button class="btn btn-secondary btn-full" onclick="dismissReminder()">אזכר אותי מאוחר יותר</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CONSENT OVERLAY ═══ -->
+<div class="consent-overlay hidden" id="consent-overlay">
+  <div class="consent-card">
+    <div class="consent-header">
+      <div class="consent-logo">🌿</div>
+      <div class="consent-title">ברוכים הבאים למרחב הטיפול</div>
+      <div class="consent-ver">גרסה 1.0 &middot; עודכן 19.02.2026</div>
+    </div>
+    <div class="consent-body">
+      <div class="consent-intro">
+        מרחב הטיפול היא מערכת תיעוד טיפולית <strong>מקומית ומוצפנת</strong>, המיועדת לשימוש מקצועי על ידי מטפלים.<br><br>
+        המשך השימוש בתוכנה מהווה אישור לכך שקראת והסכמת לתנאי השימוש ולמדיניות הפרטיות.
+      </div>
+      <div class="consent-prompt">אנא אשר/י את הסעיפים הבאים כדי להמשיך:</div>
+      <div class="consent-checks">
+        <div class="check-row" id="row-tos" onclick="toggleCheck('tos')">
+          <div class="check-box" id="box-tos"><span class="check-tick">&#10003;</span></div>
+          <div class="check-text">קראתי ואני מסכים/ה ל<a class="check-link" onclick="openDocStop('tos',event)">תנאי השימוש</a></div>
+        </div>
+        <div class="check-row" id="row-privacy" onclick="toggleCheck('privacy')">
+          <div class="check-box" id="box-privacy"><span class="check-tick">&#10003;</span></div>
+          <div class="check-text">קראתי ואני מסכים/ה ל<a class="check-link" onclick="openDocStop('privacy',event)">מדיניות הפרטיות</a></div>
+        </div>
+      </div>
+      <button class="consent-btn" id="consent-btn" onclick="acceptConsent()">המשך</button>
+    </div>
+    <div class="consent-footer">
+      <div class="consent-note">אם אינך מסכים לתנאים אלו, אינך רשאי להשתמש בתוכנה</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DOC VIEWER ═══ -->
+<div class="doc-overlay hidden" id="doc-overlay">
+  <div class="doc-modal">
+    <div class="doc-modal-header">
+      <div class="doc-modal-title" id="doc-modal-title"></div>
+      <button class="doc-modal-close" onclick="closeDocModal()">&#x2715;</button>
+    </div>
+    <div class="doc-modal-body" id="doc-modal-body"></div>
+    <div class="doc-modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeDocModal()">סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <header>
+    <div class="header-left">
+      <div class="logo">מרחב הטיפול <span>| תיעוד מפגשים</span></div>
+    </div>
+    <div class="header-right">
+      <span class="trial-chip" id="trial-chip" style="display:none"></span>
+      <button class="btn-ghost" id="btn-import-excel" onclick="importExcel()" style="display:none">📥 ייבוא Excel</button>
+      <button class="btn-ghost" id="btn-export-excel" onclick="exportExcel()" style="display:none">📊 ייצוא Excel</button>
+      <div class="dropdown" id="dropdown-excel" style="display:none">
+        <button class="btn-ghost" onclick="toggleDropdown()">📊 Excel ▾</button>
+        <div class="dropdown-menu">
+          <div class="dropdown-item" onclick="exportExcel();toggleDropdown()">📊 ייצוא ל-Excel</div>
+          <div class="dropdown-item" onclick="importExcel();toggleDropdown()">📥 ייבוא מ-Excel</div>
+        </div>
+      </div>
+      <div class="dropdown" id="dd-legal">
+        <button class="btn-ghost" onclick="toggleLegalDD()">📄 &#x25BE;</button>
+        <div class="dropdown-menu">
+          <div class="dropdown-item" onclick="openDoc('tos');toggleLegalDD()">&#x1F4CB; תנאי שימוש</div>
+          <div class="dropdown-item" onclick="openDoc('privacy');toggleLegalDD()">&#x1F512; מדיניות פרטיות</div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item" onclick="showConsentAgain();toggleLegalDD()">&#x2610; הסכמות</div>
+        </div>
+      </div>
+      <button class="btn-ghost" onclick="importData()">📥 ייבוא</button>
+      <button class="btn-ghost" onclick="exportData()">📤 ייצוא</button>
+      <button class="btn-ghost" onclick="openModal('settings')">⚙️</button>
+      <button class="btn btn-secondary btn-sm" onclick="lockApp()">🔒 נעל</button>
+      <button class="btn btn-primary btn-sm" id="btn-add-client" onclick="openNewClient()">+ מטופל/ת</button>
+    </div>
+  </header>
+  <div id="limit-bar" class="limit-bar" style="display:none">
+    <span id="limit-bar-text">⚠️ הגעת למגבלת הגרסה</span>
+    <button class="btn btn-primary btn-sm" onclick="showActivationScreen()" style="margin-right:auto" id="limit-bar-btn">🔑 שדרג</button>
+  </div>
+  <div class="app-body">
+    <aside class="sidebar">
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab active" id="tab-active" onclick="switchTab('active')">פעילים <span class="tab-badge" id="badge-active">0</span></button>
+        <button class="sidebar-tab" id="tab-archive" onclick="switchTab('archive')">📦 ארכיון <span class="tab-badge" id="badge-archive">0</span></button>
+      </div>
+      <div class="sidebar-top">
+        <input class="search-box" type="text" id="client-search" placeholder="חיפוש מטופל..." oninput="renderClients(this.value)">
+      </div>
+      <div class="clients-list" id="clients-list"></div>
+    </aside>
+    <div class="main">
+      <div class="view active" id="view-welcome">
+        <div class="welcome">
+          <div class="welcome-icon">🌿</div>
+          <h2>ברוכים הבאים למרחב הטיפול</h2>
+          <p>בחר/י מטופל/ת מהרשימה, או הוסיפו מטופל/ת חדש/ה</p>
+        </div>
+      </div>
+      <div class="view" id="view-client">
+        <div class="cv-header">
+          <div><div class="cv-name" id="cv-name"></div><div class="cv-sub" id="cv-sub"></div></div>
+          <div class="cv-actions">
+            <button class="btn btn-archive btn-sm" id="btn-toggle-archive" onclick="toggleArchive()">📦 ארכיון</button>
+            <button class="btn btn-secondary btn-sm" onclick="openEditClient()">✏️ עריכה</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteClient()">🗑</button>
+          </div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-label">מפגשים</div><div class="stat-value" id="cv-count">0</div></div>
+          <div class="stat-card"><div class="stat-label">סה"כ שולם</div><div class="stat-value" id="cv-paid"><span class="stat-unit">₪</span>0</div></div>
+          <div class="stat-card"><div class="stat-label">חוב פתוח</div><div class="stat-value" id="cv-debt" style="color:var(--danger)"><span class="stat-unit">₪</span>0</div></div>
+          <div class="stat-card"><div class="stat-label">מפגש אחרון</div><div class="stat-value" id="cv-last" style="font-size:15px;padding-top:5px">—</div></div>
+        </div>
+        <div id="cv-notes-area"></div>
+        <div class="sessions-area">
+          <div class="section-header">
+            <span class="section-title">מפגשים</span>
+            <button class="btn btn-primary btn-sm" onclick="openNewSession()">+ מפגש חדש</button>
+          </div>
+          <div id="sessions-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Client -->
+<div class="overlay" id="overlay-client">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="client-modal-title">מטופל/ת חדש/ה</div><button class="modal-close" onclick="closeModal('client')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="f-cid">
+      <div class="form-row"><div class="form-group"><label>שם פרטי *</label><input type="text" id="f-fname" placeholder="ישראל"></div><div class="form-group"><label>שם משפחה</label><input type="text" id="f-lname" placeholder="ישראלי"></div></div>
+      <div class="form-row"><div class="form-group"><label>טלפון</label><input type="tel" id="f-phone"></div><div class="form-group"><label>אימייל</label><input type="email" id="f-email"></div></div>
+      <div class="form-row"><div class="form-group"><label>מחיר (₪)</label><input type="number" id="f-price" placeholder="350"></div><div class="form-group"><label>תדירות</label><select id="f-freq"><option>שבועי</option><option>דו-שבועי</option><option>חודשי</option><option>לא קבוע</option></select></div></div>
+      <div class="form-group"><label>גיל</label><input type="number" id="f-age"></div>
+      <div class="form-group"><label>הערות / רקע</label><textarea id="f-notes"></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('client')">ביטול</button><button class="btn btn-primary" onclick="saveClient()">שמירה</button></div>
+  </div>
+</div>
+
+<!-- Modal: Session -->
+<div class="overlay" id="overlay-session">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="session-modal-title">מפגש חדש</div><button class="modal-close" onclick="closeModal('session')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="fs-id">
+      <div class="form-row"><div class="form-group"><label>תאריך</label><input type="date" id="fs-date"></div><div class="form-group"><label>משך (דקות)</label><input type="number" id="fs-dur" value="50"></div></div>
+      <div class="form-row"><div class="form-group"><label>מחיר (₪)</label><input type="number" id="fs-price"></div><div class="form-group"><label>תשלום</label><select id="fs-pay"><option value="לא שולם">לא שולם</option><option value="שולם">שולם</option></select></div></div>
+      <div class="form-group"><label>נושאים שעלו</label>
+        <div class="tags-grid" id="tags-grid">
+          <span class="tag-chip" onclick="this.classList.toggle('on')">חרדה</span><span class="tag-chip" onclick="this.classList.toggle('on')">דיכאון</span><span class="tag-chip" onclick="this.classList.toggle('on')">קשרים</span><span class="tag-chip" onclick="this.classList.toggle('on')">משפחה</span><span class="tag-chip" onclick="this.classList.toggle('on')">טראומה</span><span class="tag-chip" onclick="this.classList.toggle('on')">עבודה</span><span class="tag-chip" onclick="this.classList.toggle('on')">זוגיות</span><span class="tag-chip" onclick="this.classList.toggle('on')">ילדות</span><span class="tag-chip" onclick="this.classList.toggle('on')">גבולות</span><span class="tag-chip" onclick="this.classList.toggle('on')">דימוי עצמי</span><span class="tag-chip" onclick="this.classList.toggle('on')">אבל ואובדן</span><span class="tag-chip" onclick="this.classList.toggle('on')">מיניות</span><span class="tag-chip" onclick="this.classList.toggle('on')">כעס</span><span class="tag-chip" onclick="this.classList.toggle('on')">בדידות</span><span class="tag-chip" onclick="this.classList.toggle('on')">פוביה</span><span class="tag-chip" onclick="this.classList.toggle('on')">לימודים</span>
+        </div>
+      </div>
+      <div class="form-group"><label>סיכום מפגש</label><textarea id="fs-summary" rows="4"></textarea></div>
+      <div class="form-group"><label>לפגישה הבאה</label><textarea id="fs-next" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('session')">ביטול</button><button class="btn btn-primary" onclick="saveSession()">שמירה</button></div>
+  </div>
+</div>
+
+<!-- Modal: Settings -->
+<div class="overlay" id="overlay-settings">
+  <div class="modal" style="width:440px">
+    <div class="modal-header"><div class="modal-title">⚙️ הגדרות</div><button class="modal-close" onclick="closeModal('settings')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><div class="theme-label">ערכת צבעים</div><div class="theme-picker"><div class="theme-swatch" data-t="dark" onclick="setTheme('dark')"></div><div class="theme-swatch" data-t="warm" onclick="setTheme('warm')"></div><div class="theme-swatch" data-t="light" onclick="setTheme('light')"></div><div class="theme-swatch" data-t="green" onclick="setTheme('green')"></div><div class="theme-swatch" data-t="blue" onclick="setTheme('blue')"></div></div><div id="theme-name" style="font-size:12px;color:var(--text-muted);margin-top:8px"></div></div>
+      <hr>
+      <div class="form-group">
+<button class="btn btn-secondary" onclick="closeModal('settings');showScreen('expired')" style="color:var(--accent);border-color:var(--accent)">🔑 רכישה / הרחבת גרסה</button>
+        <label>סיסמת גיבוי חירום</label>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.6">סיסמה שנייה לשחזור גישה אם תשכח את הסיסמה הראשית. הנתונים ישמרו.</div>
+        <input type="password" id="s-current-for-backup" placeholder="סיסמה נוכחית" style="margin-bottom:8px">
+        <input type="password" id="s-backup-pass" placeholder="סיסמת גיבוי חדשה" style="margin-bottom:8px">
+        <input type="password" id="s-backup-pass2" placeholder="אישור סיסמת גיבוי">
+        <div class="lock-error" id="backup-error"></div>
+        <div id="backup-status" style="font-size:12px;margin-top:8px"></div>
+      </div>
+      <hr>
+      <div class="form-group"><label>שינוי סיסמה</label><input type="password" id="s-old" placeholder="סיסמה נוכחית" style="margin-bottom:8px"><input type="password" id="s-new" placeholder="סיסמה חדשה" style="margin-bottom:8px"><input type="password" id="s-new2" placeholder="אישור סיסמה חדשה"><div class="lock-error" id="settings-error"></div></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('settings')">סגור</button><button class="btn btn-secondary" onclick="saveBackupPassword()">שמור סיסמת גיבוי</button><button class="btn btn-primary" onclick="changePassword()">עדכן סיסמה</button></div>
+         </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let DB={clients:[],sessions:[]}, currentClientId=null, licenseStatus=null, currentTab='active';
+const THEMES={dark:'כהה',warm:'חום-חמים',light:'בהיר',green:'ירוק-יער',blue:'כחול-לילה'};
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function today(){return new Date().toISOString().split('T')[0];}
+function formatDate(d){if(!d)return'—';const[y,m,day]=d.split('-');const mn=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];return`${parseInt(day)} ${mn[parseInt(m)-1]} ${y}`;}
+function setTheme(t){document.documentElement.setAttribute('data-theme',t==='dark'?'':t);localStorage.setItem('theme',t);document.querySelectorAll('.theme-swatch').forEach(s=>s.classList.toggle('active',s.dataset.t===t));document.getElementById('theme-name').textContent=THEMES[t]||'';}
+function loadTheme(){setTheme(localStorage.getItem('theme')||'light');}
+function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast show ${type}`;setTimeout(()=>t.classList.remove('show'),2600);}
+function openModal(n){document.getElementById(`overlay-${n}`).classList.add('open');}
+function closeModal(n){document.getElementById(`overlay-${n}`).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+function getMaxClients(){return licenseStatus?.maxClients||5;}
+function isTrial(){return !licenseStatus||licenseStatus.tier==='TRIAL';}
+function isUnlimited(){return licenseStatus?.tier==='UNLIMITED';}
+function atClientLimit(){if(isUnlimited())return false;return DB.clients.length>=getMaxClients();}
+
+function showScreen(name){
+  ['lock','expired','trial-expired'].forEach(s=>document.getElementById(`screen-${s}`).classList.add('hidden'));
+  document.getElementById(`screen-${name}`).classList.remove('hidden');
+}
+function showActivationScreen(){
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('activation-error').textContent='';
+  document.getElementById('activation-input').value='';
+  const mid=licenseStatus?.machineId||'...';
+  document.getElementById('machine-id-display').textContent=mid;
+  const tier=licenseStatus?.tier||'TRIAL';
+  const total=DB.clients.length;
+  const max=getMaxClients();
+  if(tier==='TRIAL'){
+    document.getElementById('upgrade-icon').textContent='🔒';
+    document.getElementById('upgrade-title').textContent='הרחב את הגרסה';
+    document.getElementById('upgrade-sub').textContent=`הגעת למרב המטופלים בגרסת הנסיון.`;
+    document.getElementById('back-to-app-btn').style.display='block';
+  } else {
+    document.getElementById('upgrade-icon').textContent='⬆️';
+    document.getElementById('upgrade-title').textContent=`הרחב מגרסת ${tier}`;
+    document.getElementById('upgrade-sub').textContent=`הגעת למרב המטופלים `;
+    document.getElementById('back-to-app-btn').style.display='block';
+  }
+  showScreen('expired');
+}
+function backToApp(){
+  document.getElementById('screen-expired').classList.add('hidden');
+  document.getElementById('app').classList.add('visible');
+}
+function updateTierChip(){
+  const chip=document.getElementById('trial-chip');
+  if(!licenseStatus){chip.style.display='none';return;}
+  const tier=licenseStatus.tier||'TRIAL';
+  const tierColors={TRIAL:'var(--text-muted)',START:'#6ab0f5',PRO:'#c8a96e',UNLIMITED:'#8fb8a0'};
+  chip.style.display='inline-flex';
+  if(tier==='UNLIMITED'){
+    chip.style.background='rgba(143,184,160,.12)';chip.style.color='#8fb8a0';chip.style.border='1px solid rgba(143,184,160,.3)';
+    chip.textContent='✦ UNLIMITED';return;
+  }
+  if(tier==='TRIAL'){
+    const days=licenseStatus.trialDaysLeft;
+    const warn=days<=7;
+    chip.style.background=warn?'rgba(192,97,74,.12)':'rgba(120,120,120,.1)';
+    chip.style.color=warn?'var(--danger)':'var(--text-muted)';
+    chip.style.border=warn?'1px solid rgba(192,97,74,.3)':'1px solid var(--border)';
+   } else {
+    const total=DB.clients.length;
+    chip.style.background=tierColors[tier]+'22';chip.style.color=tierColors[tier];chip.style.border=`1px solid ${tierColors[tier]}44`;
+    chip.textContent=`${tier} — ${total}/${getMaxClients()} מטופלים`;
+  }
+}
+function updateTrialChip(){updateTierChip();}
+function updateClientLimit(){
+  const atLimit=atClientLimit();
+  const bar=document.getElementById('limit-bar');
+  bar.style.display=atLimit?'flex':'none';
+  document.getElementById('btn-add-client').disabled=atLimit;
+  if(!atLimit||!licenseStatus) return;
+  const tier=licenseStatus.tier||'TRIAL';
+  const max=getMaxClients();
+  const nextMap={
+    TRIAL:{name:'START',max:10,price:'₪690'},
+    START:{name:'PRO',max:30,price:'₪1,290'},
+    PRO:{name:'UNLIMITED',max:'ללא הגבלה',price:'₪2100'}
+  };
+  const next=nextMap[tier];
+  const textEl=document.getElementById('limit-bar-text');
+  const btnEl=document.getElementById('limit-bar-btn');
+  if(next){
+    textEl.textContent=`🔑 הגעת למרב המטופלים — הרחב ל-${next.name} (${next.price} כולל מע"מ) `;
+    btnEl.textContent=`הרחב ל-${next.name}`;
+  } else {
+    textEl.textContent=`הגעת למרב ${max} המטופלים`;
+    btnEl.textContent='הרחב';
+  }
+  // Color per tier
+  const colors={TRIAL:'rgba(192,97,74,.1)',START:'rgba(200,169,110,.07)',PRO:'rgba(106,176,245,.07)'};
+  const borders={TRIAL:'rgba(192,97,74,.25)',START:'rgba(200,169,110,.2)',PRO:'rgba(106,176,245,.2)'};
+  bar.style.background=colors[tier]||colors.TRIAL;
+  bar.style.borderBottom=`1px solid ${borders[tier]||borders.TRIAL}`;
+}
+function updateExcelButtons(){
+  document.getElementById('dropdown-excel').style.display='inline-flex';
+}
+function toggleDropdown(){
+  const d=document.getElementById('dropdown-excel');
+  d.classList.toggle('open');
+}
+document.addEventListener('click',e=>{
+  const d=document.getElementById('dropdown-excel');
+  if(d&&!d.contains(e.target))d.classList.remove('open');
+});
+
+// ═══ TRIAL EXPIRY ═══
+function copyExpiryMachineId(){navigator.clipboard.writeText(document.getElementById('expiry-machine-id').textContent||'').then(()=>toast('קוד הועתק ✓','ok'));}
+function selectTierFromExpiry(tier){
+  const mid=licenseStatus?.machineId||'...';
+  window.open(`https://wa.me/972549913379?text=${_buildWAMsg(tier,mid)}`,'_blank');
+}
+async function activateFromExpiry(){
+  const raw=document.getElementById('expiry-activation-input').value;
+  const code=raw.replace(/[^A-Za-z0-9\-]/g,'').toUpperCase().trim();
+  const err=document.getElementById('expiry-activation-error');
+  if(!code||code.replace(/-/g,'').length<16){err.textContent='נא להזין קוד הפעלה תקין';return;}
+  const tier=await window.api.license.activate(code);
+  if(!tier){err.textContent='קוד שגוי — בדוק שהעתקת נכון';return;}
+  licenseStatus=await window.api.license.status();
+  toast('🎉 גרסת '+tier+' הופעלה!','ok');
+  // Now show lock screen
+  showScreen('lock');
+  const has=await window.api.auth.hasPassword();
+  if(!has){document.getElementById('lock-sub').textContent='הגדר/י סיסמה לאפליקציה';document.getElementById('lock-btn').textContent='הגדר סיסמה';}
+}
+
+async function initApp(){
+  loadTheme();
+  licenseStatus=await window.api.license.status();
+  // Check trial expiry before even showing lock screen
+  if(licenseStatus.tier==='TRIAL'&&licenseStatus.trialExpired){
+    document.getElementById('expiry-machine-id').textContent=licenseStatus.machineId||'...';
+    showScreen('trial-expired');
+    return;
+  }
+  showScreen('lock');
+  const has=await window.api.auth.hasPassword();
+  if(!has){document.getElementById('lock-sub').textContent='הגדר/י סיסמה לאפליקציה';document.getElementById('lock-btn').textContent='הגדר סיסמה';document.getElementById('lock-hint').textContent='הסיסמה תגן על הנתונים שלך';document.getElementById('lock-input').placeholder='סיסמה חדשה';}
+}
+function copyMachineId(){navigator.clipboard.writeText(licenseStatus?.machineId||'').then(()=>toast('קוד הועתק ✓','ok'));}
+function autoFormatCode(input){let v=input.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase().slice(0,16);input.value=v.match(/.{1,4}/g)?.join('-')||v;}
+function _buildWAMsg(tier, mid) {
+  const tierLabels={START:'START (עד 10 מטופלים)',PRO:'PRO (עד 30 מטופלים)',UNLIMITED:'UNLIMITED (ללא הגבלה)'};
+  return encodeURIComponent(`שלום עמית,\nאני מעוניין לשדרג למרחב הטיפול גרסת ${tierLabels[tier]}.\nקוד מחשב: ${mid}`);
+}
+function selectTierAndWA(tier){
+  const mid=licenseStatus?.machineId||'...';
+  window.open(`https://wa.me/972549913379?text=${_buildWAMsg(tier,mid)}`,'_blank');
+}
+async function activateLicense(){
+  const raw=document.getElementById('activation-input').value;
+  const code=raw.replace(/[^A-Za-z0-9\-]/g,'').toUpperCase().trim();
+  const err=document.getElementById('activation-error');
+  if(!code||code.replace(/-/g,'').length<16){err.textContent='נא להזין קוד הפעלה תקין';return;}
+  const tier=await window.api.license.activate(code);
+  if(!tier){err.textContent='קוד שגוי — בדוק שהעתקת נכון';return;}
+  licenseStatus=await window.api.license.status();
+  const tierNames={START:'START',PRO:'PRO',UNLIMITED:'UNLIMITED'};
+  updateTierChip();updateClientLimit();updateExcelButtons();
+  toast('🎉 גרסת '+tierNames[tier]+' הופעלה!','ok');
+  backToApp();
+}
+async function lockSubmit(){
+  const pass=document.getElementById('lock-input').value,err=document.getElementById('lock-error');
+  if(!pass||pass.length<4){err.textContent='סיסמה קצרה מדי (מינימום 4 תווים)';return;}
+  err.textContent='';
+  const has=await window.api.auth.hasPassword();
+  if(!has){await window.api.auth.setPassword(pass);await loadAndShow();}
+  else{const ok=await window.api.auth.verify(pass);if(!ok){err.textContent='סיסמה שגויה';return;}await loadAndShow();}
+}
+function toggleLockVis(){const i=document.getElementById('lock-input');i.type=i.type==='password'?'text':'password';}
+async function loadAndShow(){
+  DB=await window.api.data.load();
+  document.getElementById('screen-lock').classList.add('hidden');
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('lock-input').value='';
+  updateTrialChip();updateClientLimit();updateExcelButtons();renderClients();renderBadges();checkBackupReminder();
+}
+
+// ═══ BACKUP REMINDER ═══
+function checkBackupReminder() {
+  if (localStorage.getItem('backup_reminder_dismissed')) return;
+  window.api.auth.hasBackup().then(has => {
+    if (!has) {
+      setTimeout(() => {
+        document.getElementById('overlay-backup-reminder').classList.remove('hidden');
+      }, 1500);
+    }
+  }).catch(()=>{});
+}
+function dismissReminder() {
+  document.getElementById('overlay-backup-reminder').classList.add('hidden');
+  localStorage.setItem('backup_reminder_dismissed', '1');
+}
+async function saveReminderBackup() {
+  const currentPass=document.getElementById('rem-current').value;
+  const backupPass=document.getElementById('rem-backup').value;
+  const backupPass2=document.getElementById('rem-backup2').value;
+  const err=document.getElementById('rem-error');
+  if(!currentPass||!backupPass||!backupPass2){err.textContent='נא למלא את כל השדות';return;}
+  if(backupPass!==backupPass2){err.textContent='סיסמאות הגיבוי אינן תואמות';return;}
+  if(backupPass.length<4){err.textContent='סיסמה קצרה מדי';return;}
+  if(backupPass===currentPass){err.textContent='סיסמת הגיבוי חייבת להיות שונה מהסיסמה הראשית';return;}
+  const ok=await window.api.auth.setBackupPassword({currentPass,backupPass});
+  if(!ok){err.textContent='הסיסמה הנוכחית שגויה';return;}
+  document.getElementById('overlay-backup-reminder').classList.add('hidden');
+  localStorage.setItem('backup_reminder_dismissed','1');
+  toast('✅ סיסמת גיבוי נשמרה — הנתונים שלך מוגנים!','ok');
+}
+
+function lockApp(){
+  currentClientId=null;
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('lock-input').value='';
+  document.getElementById('lock-error').textContent='';
+  showScreen('lock');
+  document.getElementById('view-client').classList.remove('active');
+  document.getElementById('view-welcome').classList.add('active');
+}
+async function save(){await window.api.data.save(DB);}
+function switchTab(tab){
+  currentTab=tab;
+  document.getElementById('tab-active').classList.toggle('active',tab==='active');
+  document.getElementById('tab-archive').classList.toggle('active',tab==='archive');
+  currentClientId=null;
+  document.getElementById('view-client').classList.remove('active');
+  document.getElementById('view-welcome').classList.add('active');
+  renderClients();
+}
+function renderBadges(){
+  document.getElementById('badge-active').textContent=DB.clients.filter(c=>!c.archived).length;
+  document.getElementById('badge-archive').textContent=DB.clients.filter(c=>c.archived).length;
+}
+function renderClients(filter=''){
+  const list=document.getElementById('clients-list');
+  const q=(filter||'').trim();
+  const pool=DB.clients.filter(c=>{
+    const matchTab=currentTab==='archive'?c.archived:!c.archived;
+    const matchQ=!q||`${c.fname} ${c.lname||''}`.includes(q);
+    return matchTab&&matchQ;
+  });
+  if(!pool.length){const msg=currentTab==='archive'?'אין מטופלים בארכיון':q?'לא נמצאו תוצאות':'אין מטופלים פעילים';list.innerHTML=`<div class="empty-state">${msg}</div>`;return;}
+  list.innerHTML=pool.map(c=>{
+    const sessions=DB.sessions.filter(s=>s.clientId===c.id);
+    const debt=sessions.reduce((a,s)=>s.payment==='לא שולם'?a+(s.price||0):a,0);
+    const initials=c.fname.charAt(0)+(c.lname?c.lname.charAt(0):'');
+    return`<div class="client-item ${currentClientId===c.id?'active':''} ${c.archived?'archived':''}" onclick="selectClient('${c.id}')">
+      <div class="client-avatar ${c.archived?'archived-av':''}">${initials}</div>
+      <div class="client-info"><div class="client-name">${c.fname} ${c.lname||''}</div><div class="client-meta">${sessions.length} מפגשים${c.freq?' · '+c.freq:''}</div></div>
+      ${c.archived?`<span class="archive-tag">ארכיון</span>`:debt?`<div class="debt-dot" title="חוב ₪${debt}"></div>`:''}
+    </div>`;
+  }).join('');
+}
+function selectClient(id){
+  currentClientId=id;
+  renderClients(document.getElementById('client-search').value);
+  renderClientView();
+  document.getElementById('view-welcome').classList.remove('active');
+  document.getElementById('view-client').classList.add('active');
+}
+function renderClientView(){
+  const c=DB.clients.find(x=>x.id===currentClientId);if(!c)return;
+  const sessions=DB.sessions.filter(s=>s.clientId===c.id).sort((a,b)=>b.date.localeCompare(a.date));
+  const paid=sessions.reduce((a,s)=>s.payment==='שולם'?a+(s.price||0):a,0);
+  const debt=sessions.reduce((a,s)=>s.payment==='לא שולם'?a+(s.price||0):a,0);
+  document.getElementById('cv-name').textContent=`${c.fname} ${c.lname||''}`;
+  document.getElementById('cv-sub').textContent=[c.phone,c.email,c.age?`גיל: ${c.age}`:'',c.price?`₪${c.price} למפגש`:'',c.freq||''].filter(Boolean).join(' · ');
+  document.getElementById('cv-count').textContent=sessions.length;
+  document.getElementById('cv-paid').innerHTML=`<span class="stat-unit">₪</span>${paid}`;
+  document.getElementById('cv-debt').innerHTML=`<span class="stat-unit">₪</span>${debt}`;
+  document.getElementById('cv-last').textContent=sessions[0]?formatDate(sessions[0].date):'—';
+  const archBtn=document.getElementById('btn-toggle-archive');
+  archBtn.textContent=c.archived?'✅ החזר לפעילים':'📦 העבר לארכיון';
+  document.getElementById('cv-notes-area').innerHTML=c.notes?`<div class="cn-box"><div class="cn-label">הערות כלליות</div><div class="cn-text">${c.notes}</div></div>`:'';
+  const sList=document.getElementById('sessions-list');
+  if(!sessions.length){sList.innerHTML=`<div class="empty-state">אין מפגשים עדיין</div>`;return;}
+  sList.innerHTML=sessions.map((s,i)=>`
+    <div class="session-card">
+      <div class="sc-header" onclick="toggleCard('sc-${s.id}')">
+        <div class="sc-left"><div class="sc-num">${sessions.length-i}</div><div><div class="sc-date">${formatDate(s.date)}</div><div class="sc-dur">${s.duration||50} דקות</div></div></div>
+        <div class="sc-right">
+          ${s.tags&&s.tags.length?`<span class="tag-pill">${s.tags[0]}${s.tags.length>1?' +'+(s.tags.length-1):''}</span>`:''}
+          <span class="pay-badge ${s.payment==='שולם'?'pay-paid':'pay-unpaid'}">${s.payment==='שולם'?'✓':'!'} ${s.price?'₪'+s.price:''} ${s.payment}</span>
+          <button class="expand-btn" id="ebtn-${s.id}">▾</button>
+        </div>
+      </div>
+      <div class="sc-body" id="sc-${s.id}">
+        ${s.tags&&s.tags.length?`<div class="sc-tags">${s.tags.map(t=>`<span class="sc-tag">${t}</span>`).join('')}</div>`:''}
+        ${s.summary?`<div class="sc-label">סיכום</div><div class="sc-text">${s.summary}</div>`:''}
+        ${s.nextSession?`<div class="sc-label">לפגישה הבאה</div><div class="sc-text">${s.nextSession}</div>`:''}
+        ${!s.summary&&!s.nextSession?`<div class="sc-text empty">אין סיכום מפגש</div>`:''}
+        <div class="sc-actions">
+          <button class="btn btn-secondary btn-sm" onclick="editSession('${s.id}')">✏️ עריכה</button>
+          <button class="btn btn-secondary btn-sm" onclick="togglePay('${s.id}')">${s.payment==='שולם'?'↩ לא שולם':'✓ שולם'}</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSession('${s.id}')">🗑</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function toggleCard(id){document.getElementById(id).classList.toggle('open');document.getElementById('ebtn-'+id.replace('sc-','')).classList.toggle('open');}
+async function toggleArchive(){
+  const c=DB.clients.find(x=>x.id===currentClientId);if(!c)return;
+  // Check limit when unarchiving
+  if(c.archived && atClientLimit()){toast(`הגעת למגבלת ${getMaxClients()} מטופלים — שדרג כדי להוסיף עוד`,'error');return;}
+  c.archived=!c.archived;
+  await save();renderBadges();updateClientLimit();updateTrialChip();
+  if(c.archived){toast('המטופל הועבר לארכיון','ok');currentClientId=null;switchTab('active');}
+  else{toast('המטופל הוחזר לפעילים','ok');renderClients();renderClientView();}
+}
+function openNewClient(){
+  if(atClientLimit()){showActivationScreen();return;}
+  clearClientForm();openModal('client');
+}
+function openEditClient(){
+  const c=DB.clients.find(x=>x.id===currentClientId);if(!c)return;
+  document.getElementById('client-modal-title').textContent='עריכת מטופל/ת';
+  document.getElementById('f-cid').value=c.id;
+  document.getElementById('f-fname').value=c.fname;
+  document.getElementById('f-lname').value=c.lname||'';
+  document.getElementById('f-phone').value=c.phone||'';
+  document.getElementById('f-email').value=c.email||'';
+  document.getElementById('f-price').value=c.price||'';
+  document.getElementById('f-age').value=c.age||'';
+  document.getElementById('f-freq').value=c.freq||'שבועי';
+  document.getElementById('f-notes').value=c.notes||'';
+  openModal('client');
+}
+function clearClientForm(){
+  document.getElementById('client-modal-title').textContent='מטופל/ת חדש/ה';
+  ['f-cid','f-fname','f-lname','f-phone','f-email','f-price','f-age','f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-freq').value='שבועי';
+}
+async function saveClient(){
+  const fname=document.getElementById('f-fname').value.trim();
+  if(!fname){toast('נא למלא שם פרטי');return;}
+  const cid=document.getElementById('f-cid').value;
+  const obj={fname,lname:document.getElementById('f-lname').value.trim(),phone:document.getElementById('f-phone').value.trim(),email:document.getElementById('f-email').value.trim(),price:parseInt(document.getElementById('f-price').value)||0,age:parseInt(document.getElementById('f-age').value)||0,freq:document.getElementById('f-freq').value,notes:document.getElementById('f-notes').value.trim()};
+  if(cid){const idx=DB.clients.findIndex(c=>c.id===cid);DB.clients[idx]={...DB.clients[idx],...obj};toast('עודכן/ה ✓','ok');await save();closeModal('client');renderClients();renderClientView();}
+  else{obj.id=genId();obj.createdAt=new Date().toISOString();obj.archived=false;DB.clients.push(obj);await save();closeModal('client');selectClient(obj.id);renderBadges();updateClientLimit();updateTrialChip();toast('נוסף/ה ✓','ok');}
+}
+async function deleteClient(){
+  if(!confirm('למחוק את המטופל/ת ואת כל המפגשים?'))return;
+  DB.sessions=DB.sessions.filter(s=>s.clientId!==currentClientId);
+  DB.clients=DB.clients.filter(c=>c.id!==currentClientId);
+  currentClientId=null;
+  await save();renderClients();renderBadges();updateClientLimit();updateTrialChip();
+  document.getElementById('view-client').classList.remove('active');
+  document.getElementById('view-welcome').classList.add('active');
+  toast('נמחק/ה');
+}
+function openNewSession(){
+  clearSessionForm();
+  const c=DB.clients.find(x=>x.id===currentClientId);
+  document.getElementById('fs-date').value=today();
+  if(c&&c.price)document.getElementById('fs-price').value=c.price;
+  openModal('session');
+}
+function clearSessionForm(){
+  document.getElementById('session-modal-title').textContent='מפגש חדש';
+  ['fs-id','fs-date','fs-summary','fs-next'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fs-dur').value='50';
+  document.getElementById('fs-price').value='';
+  document.getElementById('fs-pay').value='לא שולם';
+  document.querySelectorAll('#tags-grid .tag-chip').forEach(t=>t.classList.remove('on'));
+}
+function editSession(id){
+  const s=DB.sessions.find(x=>x.id===id);if(!s)return;
+  document.getElementById('session-modal-title').textContent='עריכת מפגש';
+  document.getElementById('fs-id').value=s.id;
+  document.getElementById('fs-date').value=s.date;
+  document.getElementById('fs-dur').value=s.duration||50;
+  document.getElementById('fs-price').value=s.price||'';
+  document.getElementById('fs-pay').value=s.payment||'לא שולם';
+  document.getElementById('fs-summary').value=s.summary||'';
+  document.getElementById('fs-next').value=s.nextSession||'';
+  document.querySelectorAll('#tags-grid .tag-chip').forEach(t=>t.classList.toggle('on',(s.tags||[]).includes(t.textContent)));
+  openModal('session');
+}
+async function saveSession(){
+  const date=document.getElementById('fs-date').value;if(!date){toast('נא לבחור תאריך');return;}
+  const sid=document.getElementById('fs-id').value;
+  const obj={clientId:currentClientId,date,duration:parseInt(document.getElementById('fs-dur').value)||50,price:parseInt(document.getElementById('fs-price').value)||0,payment:document.getElementById('fs-pay').value,tags:[...document.querySelectorAll('#tags-grid .tag-chip.on')].map(t=>t.textContent),summary:document.getElementById('fs-summary').value.trim(),nextSession:document.getElementById('fs-next').value.trim()};
+  if(sid){const idx=DB.sessions.findIndex(s=>s.id===sid);DB.sessions[idx]={...DB.sessions[idx],...obj};toast('מפגש עודכן ✓','ok');}
+  else{obj.id=genId();obj.createdAt=new Date().toISOString();DB.sessions.push(obj);toast('מפגש נשמר ✓','ok');}
+  await save();closeModal('session');renderClientView();renderClients();
+}
+async function togglePay(id){
+  const s=DB.sessions.find(x=>x.id===id);if(!s)return;
+  s.payment=s.payment==='שולם'?'לא שולם':'שולם';
+  await save();renderClientView();renderClients();
+  toast(s.payment==='שולם'?'סומן כשולם ✓':'סומן כלא שולם','ok');
+}
+async function deleteSession(id){
+  if(!confirm('למחוק את המפגש?'))return;
+  DB.sessions=DB.sessions.filter(s=>s.id!==id);
+  await save();renderClientView();renderClients();toast('המפגש נמחק');
+}
+async function changePassword(){
+  const oldPass=document.getElementById('s-old').value,newPass=document.getElementById('s-new').value,newPass2=document.getElementById('s-new2').value,errEl=document.getElementById('settings-error');
+  if(!oldPass||!newPass||!newPass2){errEl.textContent='נא למלא את כל השדות';return;}
+  if(newPass!==newPass2){errEl.textContent='הסיסמאות אינן תואמות';return;}
+  if(newPass.length<4){errEl.textContent='סיסמה קצרה מדי';return;}
+  const ok=await window.api.auth.changePassword({oldPass,newPass});
+  if(!ok){errEl.textContent='הסיסמה הנוכחית שגויה';return;}
+  errEl.textContent='';['s-old','s-new','s-new2'].forEach(id=>document.getElementById(id).value='');
+  closeModal('settings');toast('הסיסמה עודכנה ✓','ok');
+}
+async function exportExcel(){const ok=await window.api.data.exportExcel(DB);if(ok)toast('יוצא ל-Excel ✓','ok');}
+async function importExcel(){
+  const clients=await window.api.data.importExcel();if(!clients)return;
+  if(clients.error){toast(clients.error);return;}
+  if(!clients.length){toast('לא נמצאו מטופלים');return;}
+  if(!confirm(`נמצאו ${clients.length} מטופלים. להוסיף?`))return;
+  let added=0;
+  clients.forEach(c=>{const exists=DB.clients.find(x=>x.fname===c.fname&&x.lname===c.lname);if(!exists){c.archived=false;DB.clients.push(c);added++;}});
+  await save();renderClients();renderBadges();updateClientLimit();updateTrialChip();
+  toast(`נוספו ${added} מטופלים ✓`,'ok');
+}
+async function _oldExportRemoved(){}
+let _exportFilePath = null;
+let _importEnc = null;
+
+async function exportData(){
+  const result = await window.api.data.export(DB);
+  if (!result) return;
+  if (result.status === 'cancelled') return;
+  if (!result.filePath) return;
+  _exportFilePath = result.filePath;
+  document.getElementById('exp-pass1').value = '';
+  document.getElementById('exp-pass2').value = '';
+  document.getElementById('exp-pass-error').textContent = '';
+  document.getElementById('overlay-export-pass').classList.remove('hidden');
+  setTimeout(() => document.getElementById('exp-pass1').focus(), 150);
+}
+function cancelExport(){
+  _exportFilePath = null;
+  document.getElementById('overlay-export-pass').classList.add('hidden');
+}
+async function confirmExport(){
+  const p1 = document.getElementById('exp-pass1').value;
+  const p2 = document.getElementById('exp-pass2').value;
+  const err = document.getElementById('exp-pass-error');
+  if (!p1 || p1.length < 4) { err.textContent = 'סיסמה קצרה מדי (מינימום 4 תווים)'; return; }
+  if (p1 !== p2) { err.textContent = 'הסיסמאות אינן תואמות'; return; }
+  const ok = await window.api.data.exportWithPassword({ filePath: _exportFilePath, password: p1, payload: DB });
+  if (!ok) { err.textContent = 'שגיאה בשמירה'; return; }
+  cancelExport();
+  toast('גיבוי מוצפן נשמר ✓', 'ok');
+}
+
+async function importData(){
+  const result = await window.api.data.import();
+  if (!result) return;
+  if (result.status === 'error') { toast('❌ ' + result.msg, 'error'); return; }
+  if (result.status === 'ok') {
+    if (!confirm('ייבוא יחליף את כל הנתונים הקיימים. להמשיך?')) return;
+    DB = result.data; await save(); currentClientId = null;
+    renderClients(); renderBadges(); updateClientLimit(); updateTrialChip();
+    document.getElementById('view-client').classList.remove('active');
+    document.getElementById('view-welcome').classList.add('active');
+    toast('הנתונים יובאו ✓', 'ok');
+    return;
+  }
+  if (result.status === 'need_password') {
+    _importEnc = result.enc;
+    document.getElementById('imp-pass').value = '';
+    document.getElementById('imp-pass-error').textContent = '';
+    document.getElementById('overlay-import-pass').classList.remove('hidden');
+    setTimeout(() => document.getElementById('imp-pass').focus(), 100);
+  }
+}
+function cancelImport(){
+  _importEnc = null;
+  document.getElementById('overlay-import-pass').classList.add('hidden');
+}
+async function confirmImport(){
+  const password = document.getElementById('imp-pass').value;
+  const err = document.getElementById('imp-pass-error');
+  if (!password) { err.textContent = 'נא להזין סיסמה'; return; }
+  const result = await window.api.data.importWithPassword({ enc: _importEnc, password });
+  if (result.status === 'error') { err.textContent = result.msg; return; }
+  if (!confirm('ייבוא יחליף את כל הנתונים הקיימים. להמשיך?')) { cancelImport(); return; }
+  cancelImport();
+  DB = result.data; await save(); currentClientId = null;
+  renderClients(); renderBadges(); updateClientLimit(); updateTrialChip();
+  document.getElementById('view-client').classList.remove('active');
+  document.getElementById('view-welcome').classList.add('active');
+  toast('הנתונים יובאו ✓', 'ok');
+}
+
+// ═══ LEGAL CONTENT ═══
+const TOS_CONTENT = `
+<h1>תנאי שימוש — מרחב הטיפול</h1>
+<p class="doc-updated">עודכן לאחרונה: 19/02/2026</p>
+<div class="doc-section"><h2>1. כללי</h2>
+<p>1.1 תוכנת "מרחב הטיפול" (להלן: "התוכנה") הינה מערכת מקומית (אופליין) לתיעוד וניהול מידע טיפולי.</p>
+<p>1.2 השימוש בתוכנה מהווה הסכמה מלאה לתנאי שימוש אלה.</p>
+<p>1.3 אם אינך מסכים לתנאים אלו, אינך רשאי להשתמש בתוכנה.</p></div>
+<div class="doc-section"><h2>2. רישיון שימוש</h2>
+<p>2.1 למשתמש מוענק רישיון שימוש אישי, בלעדי ובלתי ניתן להעברה.</p>
+<p>2.2 הרישיון תקף לגרסה שנרכשה בלבד, אלא אם צוין אחרת במפורש.</p>
+<p>2.3 אין להעתיק, להפיץ, להשכיר או להעביר את התוכנה לצד שלישי ללא אישור בכתב.</p></div>
+<div class="doc-section"><h2>3. אחריות המשתמש</h2>
+<p>3.1 המשתמש אחראי לשימוש מקצועי וחוקי בתוכנה.</p>
+<p>3.2 המשתמש אחראי לשמירת הסיסמה הראשית במקום בטוח.</p>
+<p>3.3 המשתמש אחראי לביצוע גיבויים תקופתיים של הנתונים.</p>
+<p>3.4 המשתמש אחראי לעמידה בכל דרישות החוק החלות עליו.</p></div>
+<div class="doc-section"><h2>4. אבטחת מידע</h2>
+<p>4.1 התוכנה שומרת את הנתונים באופן מקומי ומוצפן במחשב המשתמש.</p>
+<p>4.2 למפתח אין גישה לנתונים הנשמרים בתוכנה.</p>
+<p>4.3 במקרה של אובדן סיסמה, לא קיימת אפשרות לשחזור המידע מטעמי אבטחה.</p></div>
+<div class="doc-section"><h2>5. הגבלת אחריות</h2>
+<p>5.1 התוכנה מסופקת "כמו שהיא" (AS IS).</p>
+<p>5.2 המפתח עושה מאמצים סבירים להבטחת תקינות ואבטחת התוכנה.</p>
+<p>5.3 המפתח אינו אחראי לנזקים או לאובדן מידע הנובעים מגורמים שאינם בשליטתו, לרבות תקלות חומרה, וירוסים, חדירה למחשב, גניבה פיזית או שימוש בלתי תקין.</p></div>
+<div class="doc-section"><h2>6. עדכונים ושדרוגים</h2>
+<p>6.1 עדכונים עתידיים, ככל שיוצעו, עשויים להיות כרוכים בתשלום נוסף.</p>
+<p>6.2 אין התחייבות למתן עדכונים או תמיכה בלתי מוגבלת.</p></div>
+<div class="doc-section"><h2>7. סמכות שיפוט</h2>
+<p>7.1 על תנאים אלו יחולו דיני מדינת ישראל.</p>
+<p>7.2 סמכות השיפוט הבלעדית תהא לבתי המשפט המוסמכים בישראל.</p></div>`;
+
+const PRIVACY_CONTENT = `
+<h1>מדיניות פרטיות — מרחב הטיפול</h1>
+<p class="doc-updated">עודכן לאחרונה: 19/02/2026</p>
+<div class="doc-section"><h2>1. עקרונות כלליים</h2>
+<p>1.1 תוכנת "מרחב הטיפול" פועלת במתכונת מקומית (אופליין) בלבד.</p>
+<p>1.2 המידע נשמר במחשב המשתמש ואינו מועבר לשרתים חיצוניים.</p></div>
+<div class="doc-section"><h2>2. סוגי מידע</h2>
+<p>התוכנה מאפשרת הזנת מידע טיפולי, לרבות פרטי מטופלים וסיכומי פגישות. המידע מנוהל על ידי המשתמש בלבד.</p></div>
+<div class="doc-section"><h2>3. אחסון מידע</h2>
+<p>3.1 הנתונים נשמרים באופן מקומי במחשב המשתמש.</p>
+<p>3.2 הנתונים נשמרים בפורמט מוצפן.</p>
+<p>3.3 למפתח אין גישה למידע הנשמר בתוכנה.</p></div>
+<div class="doc-section"><h2>4. אחריות המשתמש</h2>
+<p>4.1 המשתמש אחראי לאבטחת המחשב הפיזי.</p>
+<p>4.2 המשתמש אחראי להגנה מפני וירוסים ופריצות.</p>
+<p>4.3 המשתמש אחראי לעמידה בדרישות חוק הגנת הפרטיות ותקנות אבטחת מידע.</p></div>
+<div class="doc-section"><h2>5. שינויים במדיניות</h2>
+<p>המפתח רשאי לעדכן מדיניות זו מעת לעת. המשך השימוש בתוכנה יהווה הסכמה לגרסה המעודכנת.</p></div>`;
+
+// ═══ LEGAL FUNCTIONS ═══
+let _legalChecked = {tos:false,privacy:false};
+function toggleCheck(type){
+  _legalChecked[type]=!_legalChecked[type];
+  document.getElementById('row-'+type).classList.toggle('checked',_legalChecked[type]);
+  const ready=_legalChecked.tos&&_legalChecked.privacy;
+  const btn=document.getElementById('consent-btn');
+  btn.classList.toggle('ready',ready);
+  btn.textContent=ready?'✓ המשך לאפליקציה':'המשך';
+}
+function acceptConsent(){
+  if(!_legalChecked.tos||!_legalChecked.privacy)return;
+  localStorage.setItem('consent_accepted','1');
+  document.getElementById('consent-overlay').classList.add('hidden');
+}
+function showConsentAgain(){
+  _legalChecked={tos:false,privacy:false};
+  ['tos','privacy'].forEach(t=>{document.getElementById('row-'+t).classList.remove('checked');});
+  document.getElementById('consent-btn').classList.remove('ready');
+  document.getElementById('consent-btn').textContent='המשך';
+  document.getElementById('consent-overlay').classList.remove('hidden');
+}
+function openDoc(type){
+  document.getElementById('doc-modal-title').textContent=type==='tos'?'📋 תנאי שימוש':'🔒 מדיניות פרטיות';
+  document.getElementById('doc-modal-body').innerHTML=type==='tos'?TOS_CONTENT:PRIVACY_CONTENT;
+  document.getElementById('doc-overlay').classList.remove('hidden');
+}
+function openDocStop(type,e){e.stopPropagation();openDoc(type);}
+function closeDocModal(){document.getElementById('doc-overlay').classList.add('hidden');}
+function toggleLegalDD(){document.getElementById('dd-legal').classList.toggle('open');}
+document.addEventListener('click',e=>{const d=document.getElementById('dd-legal');if(d&&!d.contains(e.target))d.classList.remove('open');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDocModal();});
+function checkFirstConsent(){if(!localStorage.getItem('consent_accepted'))document.getElementById('consent-overlay').classList.remove('hidden');}
+
+
+// ═══ RECOVERY FUNCTIONS ═══
+function openForgotModal() {
+  showRecoveryPanel(null);
+  document.getElementById('overlay-forgot').classList.remove('hidden');
+}
+function closeForgotModal() {
+  document.getElementById('overlay-forgot').classList.add('hidden');
+}
+async function showRecoveryPanel(which) {
+  document.getElementById('forgot-options').style.display = which ? 'none' : 'block';
+  document.getElementById('panel-backup').style.display = which==='backup' ? 'block' : 'none';
+  document.getElementById('panel-reset').style.display = which==='reset' ? 'block' : 'none';
+  if (which==='reset') {
+    try {
+      const mid = await window.api.auth.getMachineIdForReset();
+      document.getElementById('reset-machine-id').textContent = mid || '...';
+    } catch(e) { document.getElementById('reset-machine-id').textContent = '...'; }
+  }
+}
+async function copyResetMachineId() {
+  const txt = document.getElementById('reset-machine-id').textContent;
+  navigator.clipboard.writeText(txt||'').then(()=>toast('קוד הועתק ✓','ok'));
+}
+function autoFormatResetCode(input){let v=input.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase().slice(0,16);input.value=v.match(/.{1,4}/g)?.join('-')||v;}
+async function recoverWithBackup() {
+  const backupPass = document.getElementById('r-backup-pass').value;
+  const newPass = document.getElementById('r-new-pass1').value;
+  const newPass2 = document.getElementById('r-new-pass2').value;
+  const err = document.getElementById('r-backup-error');
+  if (!backupPass||!newPass||!newPass2){err.textContent='נא למלא את כל השדות';return;}
+  if (newPass!==newPass2){err.textContent='הסיסמאות החדשות אינן תואמות';return;}
+  if (newPass.length<4){err.textContent='סיסמה קצרה מדי';return;}
+  const ok = await window.api.auth.recoverWithBackup({backupPass,newPass});
+  if (!ok){err.textContent='סיסמת הגיבוי שגויה';return;}
+  closeModal('forgot');
+  toast('הגישה שוחזרה בהצלחה ✓','ok');
+  await loadAndShow();
+}
+async function resetWithCode() {
+  const code = document.getElementById('r-reset-code').value;
+  const newPass = document.getElementById('r-reset-pass1').value;
+  const newPass2 = document.getElementById('r-reset-pass2').value;
+  const err = document.getElementById('r-reset-error');
+  if (!code||!newPass||!newPass2){err.textContent='נא למלא את כל השדות';return;}
+  if (newPass!==newPass2){err.textContent='הסיסמאות החדשות אינן תואמות';return;}
+  if (newPass.length<4){err.textContent='סיסמה קצרה מדי';return;}
+  const valid = await window.api.auth.verifyResetCode(code);
+  if (!valid){err.textContent='קוד שגוי או פג תוקף — קוד תקף ליום אחד בלבד';return;}
+  if (!confirm('⚠️ כל הנתונים יימחקו ולא ניתן לשחזרם. להמשיך?'))return;
+  const ok = await window.api.auth.resetWithCode({code,newPass});
+  if (!ok){err.textContent='שגיאה באיפוס';return;}
+  closeModal('forgot');
+  DB={clients:[],sessions:[]};
+  toast('האיפוס הושלם. סיסמה חדשה הוגדרה ✓','ok');
+  await loadAndShow();
+}
+async function saveBackupPassword() {
+  const currentPass = document.getElementById('s-current-for-backup').value;
+  const backupPass = document.getElementById('s-backup-pass').value;
+  const backupPass2 = document.getElementById('s-backup-pass2').value;
+  const err = document.getElementById('backup-error');
+  const status = document.getElementById('backup-status');
+  if (!currentPass||!backupPass||!backupPass2){err.textContent='נא למלא את כל השדות';return;}
+  if (backupPass!==backupPass2){err.textContent='סיסמאות הגיבוי אינן תואמות';return;}
+  if (backupPass.length<4){err.textContent='סיסמה קצרה מדי';return;}
+  if (backupPass===currentPass){err.textContent='סיסמת הגיבוי חייבת להיות שונה מהסיסמה הראשית';return;}
+  const ok = await window.api.auth.setBackupPassword({currentPass,backupPass});
+  if (!ok){err.textContent='הסיסמה הנוכחית שגויה';return;}
+  err.textContent='';
+  ['s-current-for-backup','s-backup-pass','s-backup-pass2'].forEach(id=>document.getElementById(id).value='');
+  status.innerHTML='<span style="color:var(--accent2)">✓ סיסמת גיבוי הוגדרה בהצלחה</span>';
+  setTimeout(()=>status.textContent='',3000);
+  toast('סיסמת גיבוי נשמרה ✓','ok');
+}
+let inactivityTimer;
+function resetInactivityTimer(){
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(lockApp, 15 * 60 * 1000);
+}
+function lockApp(){
+  DB = { clients: [], sessions: [] };
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('lock-input').value = '';
+  showScreen('lock');
+}
+['mousemove','keydown','click','scroll'].forEach(e =>
+  document.addEventListener(e, resetInactivityTimer)
+);
+resetInactivityTimer();
+initApp();
+checkFirstConsent();
+
+let deleteTarget = null;
+
+function restoreFocus(targetSelector=null){
+  setTimeout(()=>{
+    try{
+      window.focus();
+      if(targetSelector){
+        const t=document.querySelector(targetSelector);
+        if(t){t.focus(); if(t.select)t.select(); return;}
+      }
+      const modalField=document.querySelector('.overlay.open input, .overlay.open textarea, .overlay.open select, .overlay.open button');
+      if(modalField){modalField.focus(); return;}
+      const search=document.getElementById('client-search');
+      if(search){search.focus(); return;}
+    }catch(e){}
+  },30);
+}
+
+function closeModal(n){
+  document.getElementById(`overlay-${n}`).classList.remove('open');
+  restoreFocus();
+}
+
+function openModal(n){
+  document.getElementById(`overlay-${n}`).classList.add('open');
+  restoreFocus(`#overlay-${n} input, #overlay-${n} textarea, #overlay-${n} select`);
+}
+
+function showDeleteConfirm(type,id=null){
+  deleteTarget = {type,id};
+  document.getElementById('delete-confirm-text').textContent =
+    type==='client'
+      ? 'למחוק את המטופל/ת ואת כל המפגשים? פעולה זו אינה הפיכה.'
+      : 'למחוק את המפגש? פעולה זו אינה הפיכה.';
+  document.getElementById('delete-confirm-btn').onclick = async ()=>{
+    if(deleteTarget.type==='session'){
+      await performDeleteSession(deleteTarget.id);
+    }else{
+      await performDeleteClient();
+    }
+    closeDeleteConfirm();
+  };
+  document.getElementById('overlay-delete-confirm').classList.add('open');
+  restoreFocus('#delete-confirm-btn');
+}
+
+function closeDeleteConfirm(){
+  document.getElementById('overlay-delete-confirm').classList.remove('open');
+  deleteTarget=null;
+  restoreFocus('#client-search');
+}
+
+async function performDeleteSession(id){
+  DB.sessions = DB.sessions.filter(s => s.id !== id);
+  await save();
+  renderClientView();
+  renderClients();
+  toast('המפגש נמחק');
+}
+
+async function performDeleteClient(){
+  DB.sessions = DB.sessions.filter(s => s.clientId !== currentClientId);
+  DB.clients = DB.clients.filter(c => c.id !== currentClientId);
+  currentClientId = null;
+  await save();
+  renderClients();
+  if(typeof renderBadges==='function') renderBadges();
+  if(typeof updateClientLimit==='function') updateClientLimit();
+  if(typeof updateTrialChip==='function') updateTrialChip();
+  document.getElementById('view-client').classList.remove('active');
+  document.getElementById('view-welcome').classList.add('active');
+  toast('המטופל/ת נמחק/ה');
+}
+
+function deleteSession(id){
+  showDeleteConfirm('session', id);
+}
+
+function deleteClient(){
+  if(!currentClientId) return;
+  showDeleteConfirm('client');
+}
+
+window.addEventListener('focus',()=>restoreFocus());
+
+</script>
+
+<!-- Delete Confirm Modal -->
+<div class="overlay" id="overlay-delete-confirm">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <div class="modal-title">🗑 אישור מחיקה</div>
+      <button class="modal-close" onclick="closeDeleteConfirm()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="delete-confirm-text" style="font-size:14px;line-height:1.8;color:var(--text-dim)">
+        האם למחוק?
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeDeleteConfirm()">ביטול</button>
+      <button class="btn btn-danger" id="delete-confirm-btn">מחק</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
