@@ -22,6 +22,10 @@ contextBridge.exposeInMainWorld('api', {
     exportExcel: (payload) => ipcRenderer.invoke('data:exportExcel', payload),
     importExcel: () => ipcRenderer.invoke('data:importExcel'),
   },
+  transcription: {
+    status: () => ipcRenderer.invoke('transcription:status'),
+    transcribe: (wavBytes) => ipcRenderer.invoke('transcription:transcribe', wavBytes),
+  },
   license: {
     status: () => ipcRenderer.invoke('license:status'),
     activate: (code) => ipcRenderer.invoke('license:activate', code),
