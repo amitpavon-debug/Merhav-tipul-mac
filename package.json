@@ -43,7 +43,7 @@
       "extendInfo": {
         "NSMicrophoneUsageDescription": "מרחב הטיפול משתמש במיקרופון רק לצורך תמלול מקומי במחשב. ההקלטה אינה נשלחת לאינטרנט."
       },
-      "x64ArchFiles": "Contents/Resources/transcription/whisper-cli-arm64"
+      "x64ArchFiles": "Contents/Resources/transcription/whisper-cli-*"
     }
   }
 }
