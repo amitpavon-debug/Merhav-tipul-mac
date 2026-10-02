@@ -19,8 +19,30 @@
   "build": {
     "appId": "com.therapy.tracker",
     "productName": "מרחב הטיפול",
-    "directories": { "output": "dist" },
-    "win": { "target": "nsis", "icon": "assets/icon.ico" },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true }
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "extraResources": [
+      {
+        "from": "transcription",
+        "to": "transcription",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "מרחב הטיפול משתמש במיקרופון רק לצורך תמלול מקומי במחשב. ההקלטה אינה נשלחת לאינטרנט."
+      }
+    }
   }
 }
