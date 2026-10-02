@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const { spawn } = require('child_process');
 const { verifyActivationCode, getMachineId, verifyResetCode, TIERS, TRIAL_DAYS, LICENSE_SECRET } = require('./license');
 
 const DATA_DIR = app.getPath('userData');
@@ -302,4 +303,66 @@ ipcMain.handle('data:importExcel', async () => {
     clients.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2)+ri,createdAt:new Date().toISOString(),fname:parts[0],lname:parts.slice(1).join(' ')||'',phone:vals['B']||'',email:vals['C']||'',age:parseInt(vals['D'])||0,freq:vals['E']||'שבועי',price:parseInt(vals['F'])||0,notes:'',archived:false});
   });
   return clients;
+});
+
+
+// ─── Local transcription (whisper.cpp; no audio leaves the computer) ───
+function transcriptionPath(name) {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'transcription', name)
+    : path.join(__dirname, 'transcription', name);
+}
+function whisperBinaryPath() {
+  if (process.platform === 'win32') return transcriptionPath('whisper-cli.exe');
+  if (process.platform === 'darwin') {
+    return transcriptionPath(process.arch === 'x64' ? 'whisper-cli-x64' : 'whisper-cli-arm64');
+  }
+  return transcriptionPath('whisper-cli');
+}
+ipcMain.handle('transcription:status', () => {
+  const binary = whisperBinaryPath();
+  const model = transcriptionPath('ggml-base.bin');
+  return { ready: fs.existsSync(binary) && fs.existsSync(model), platform: process.platform, arch: process.arch };
+});
+ipcMain.handle('transcription:transcribe', async (_, wavBytes) => {
+  const binary = whisperBinaryPath();
+  const model = transcriptionPath('ggml-base.bin');
+  if (!fs.existsSync(binary) || !fs.existsSync(model)) {
+    return { ok: false, error: 'מנוע התמלול המקומי אינו מותקן בגרסה זו.' };
+  }
+
+  const tempDir = path.join(app.getPath('temp'), 'merhav-tipul-transcription');
+  fs.mkdirSync(tempDir, { recursive: true });
+  const token = crypto.randomBytes(10).toString('hex');
+  const wavPath = path.join(tempDir, token + '.wav');
+  const txtPath = wavPath + '.txt';
+
+  try {
+    fs.writeFileSync(wavPath, Buffer.from(wavBytes));
+    if (process.platform !== 'win32') {
+      try { fs.chmodSync(binary, 0o755); } catch {}
+    }
+
+    const result = await new Promise((resolve) => {
+      const args = ['-m', model, '-f', wavPath, '-l', 'he', '-otxt', '-np'];
+      const child = spawn(binary, args, { windowsHide: true });
+      let stderr = '';
+      child.stderr.on('data', d => { stderr += d.toString(); });
+      child.on('error', err => resolve({ ok: false, error: err.message }));
+      child.on('close', code => {
+        if (code !== 0) return resolve({ ok: false, error: stderr || ('whisper exited with code ' + code) });
+        try {
+          const text = fs.readFileSync(txtPath, 'utf8').trim();
+          resolve({ ok: true, text });
+        } catch (err) {
+          resolve({ ok: false, error: err.message });
+        }
+      });
+    });
+    return result;
+  } finally {
+    for (const f of [wavPath, txtPath]) {
+      try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch {}
+    }
+  }
 });
