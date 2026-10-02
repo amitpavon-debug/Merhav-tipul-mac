@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -34,7 +34,21 @@ mainWindow.webContents.on('did-finish-load', () => {
 });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  // Allow microphone access only for this app's local renderer.
+  // OS-level microphone privacy settings still remain in force.
+  session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
+    if (permission !== 'media') return false;
+    const url = details?.requestingUrl || webContents?.getURL() || '';
+    return url.startsWith('file://') && (!details?.mediaType || details.mediaType === 'audio' || details.mediaType === 'unknown');
+  });
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
+    const url = details?.requestingUrl || webContents?.getURL() || '';
+    const audioOnly = !details?.mediaTypes || (details.mediaTypes.includes('audio') && !details.mediaTypes.includes('video'));
+    callback(permission === 'media' && url.startsWith('file://') && audioOnly);
+  });
+  createWindow();
+});
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 
