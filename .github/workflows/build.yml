@@ -53,11 +53,16 @@ jobs:
         shell: pwsh
         run: |
           git clone --depth 1 --branch v1.9.4 https://github.com/ggml-org/whisper.cpp.git whisper.cpp
-          cmake -S whisper.cpp -B whisper-win -A x64 -DBUILD_SHARED_LIBS=OFF
+          cmake -S whisper.cpp -B whisper-win -A x64 -DBUILD_SHARED_LIBS=OFF -DGGML_NATIVE=OFF
           cmake --build whisper-win --config Release --target whisper-cli -j 3
           New-Item -ItemType Directory -Force -Path transcription | Out-Null
           Copy-Item whisper-win/bin/Release/whisper-cli.exe transcription/whisper-cli.exe
           Invoke-WebRequest -Uri "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin" -OutFile "transcription/ggml-base.bin"
+          # Smoke-test the exact Whisper binary that will be packaged.
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/ggml-org/whisper.cpp/v1.9.4/samples/jfk.wav" -OutFile "whisper-test.wav"
+          & ".\transcription\whisper-cli.exe" -m ".\transcription\ggml-base.bin" -f ".\whisper-test.wav" -l en -np
+          if ($LASTEXITCODE -ne 0) { throw "Packaged Whisper binary smoke test failed with exit code $LASTEXITCODE" }
+          Remove-Item "whisper-test.wav" -Force
       - run: npm run build:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
