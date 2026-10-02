@@ -254,6 +254,13 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0;}
 .tier-upgrade span{color:var(--text-muted);}
 .tier-btn-cta{font-size:10px;opacity:0;transition:opacity .2s;color:var(--text-dim);margin-top:4px;}
 .tier-btn:hover .tier-btn-cta{opacity:1;}
+
+.transcription-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:16px;}
+.transcription-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.transcription-status{font-size:12px;color:var(--text-muted);}
+.transcription-status.recording{color:var(--danger);}
+.transcription-note{font-size:11px;color:var(--text-muted);line-height:1.5;margin-top:7px;}
+
 </style>
 </head>
 <body>
@@ -689,6 +696,15 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0;}
           <span class="tag-chip" onclick="this.classList.toggle('on')">חרדה</span><span class="tag-chip" onclick="this.classList.toggle('on')">דיכאון</span><span class="tag-chip" onclick="this.classList.toggle('on')">קשרים</span><span class="tag-chip" onclick="this.classList.toggle('on')">משפחה</span><span class="tag-chip" onclick="this.classList.toggle('on')">טראומה</span><span class="tag-chip" onclick="this.classList.toggle('on')">עבודה</span><span class="tag-chip" onclick="this.classList.toggle('on')">זוגיות</span><span class="tag-chip" onclick="this.classList.toggle('on')">ילדות</span><span class="tag-chip" onclick="this.classList.toggle('on')">גבולות</span><span class="tag-chip" onclick="this.classList.toggle('on')">דימוי עצמי</span><span class="tag-chip" onclick="this.classList.toggle('on')">אבל ואובדן</span><span class="tag-chip" onclick="this.classList.toggle('on')">מיניות</span><span class="tag-chip" onclick="this.classList.toggle('on')">כעס</span><span class="tag-chip" onclick="this.classList.toggle('on')">בדידות</span><span class="tag-chip" onclick="this.classList.toggle('on')">פוביה</span><span class="tag-chip" onclick="this.classList.toggle('on')">לימודים</span>
         </div>
       </div>
+      <div class="transcription-box">
+        <label>תמלול מקומי</label>
+        <div class="transcription-controls">
+          <button type="button" class="btn btn-secondary btn-sm" id="transcription-btn" onclick="toggleTranscription()">🎙️ התחל הקלטה</button>
+          <span class="transcription-status" id="transcription-status">מוכן להקלטה</span>
+        </div>
+        <textarea id="fs-transcript" rows="6" placeholder="התמלול יופיע כאן לאחר עצירת ההקלטה"></textarea>
+        <div class="transcription-note">🔒 ההקלטה והתמלול מתבצעים במחשב בלבד. קובץ האודיו הזמני נמחק לאחר התמלול.</div>
+      </div>
       <div class="form-group"><label>סיכום מפגש</label><textarea id="fs-summary" rows="4"></textarea></div>
       <div class="form-group"><label>לפגישה הבאה</label><textarea id="fs-next" rows="2"></textarea></div>
     </div>
@@ -1019,7 +1035,7 @@ function renderClientView(){
       </div>
       <div class="sc-body" id="sc-${s.id}">
         ${s.tags&&s.tags.length?`<div class="sc-tags">${s.tags.map(t=>`<span class="sc-tag">${t}</span>`).join('')}</div>`:''}
-        ${s.summary?`<div class="sc-label">סיכום</div><div class="sc-text">${s.summary}</div>`:''}
+        ${s.summary?`<div class="sc-label">סיכום</div><div class="sc-text">${s.summary}</div>`:''}\n        ${s.transcript?`<div class="sc-label">תמלול</div><div class="sc-text">${s.transcript}</div>`:''}
         ${s.nextSession?`<div class="sc-label">לפגישה הבאה</div><div class="sc-text">${s.nextSession}</div>`:''}
         ${!s.summary&&!s.nextSession?`<div class="sc-text empty">אין סיכום מפגש</div>`:''}
         <div class="sc-actions">
@@ -1081,6 +1097,112 @@ async function deleteClient(){
   document.getElementById('view-welcome').classList.add('active');
   toast('נמחק/ה');
 }
+
+let transcriptionRecorder=null;
+let transcriptionAudioContext=null;
+let transcriptionSource=null;
+let transcriptionProcessor=null;
+let transcriptionStream=null;
+let transcriptionChunks=[];
+let transcriptionSampleRate=44100;
+let transcriptionStartedAt=0;
+let transcriptionTimer=null;
+
+function resetTranscriptionUI(){
+  const btn=document.getElementById('transcription-btn');
+  const status=document.getElementById('transcription-status');
+  if(btn){btn.textContent='🎙️ התחל הקלטה';btn.disabled=false;}
+  if(status){status.textContent='מוכן להקלטה';status.classList.remove('recording');}
+}
+function setTranscriptionStatus(text,recording=false){
+  const el=document.getElementById('transcription-status');
+  if(!el)return;
+  el.textContent=text;
+  el.classList.toggle('recording',recording);
+}
+function transcriptionElapsed(){
+  const sec=Math.floor((Date.now()-transcriptionStartedAt)/1000);
+  return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
+}
+async function toggleTranscription(){
+  if(transcriptionStream){await stopAndTranscribe();return;}
+  await startLocalRecording();
+}
+async function startLocalRecording(){
+  try{
+    const engine=await window.api.transcription.status();
+    if(!engine.ready){toast('מנוע התמלול המקומי אינו זמין בגרסה זו','error');return;}
+    transcriptionStream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true},video:false});
+    transcriptionAudioContext=new (window.AudioContext||window.webkitAudioContext)();
+    transcriptionSampleRate=transcriptionAudioContext.sampleRate;
+    transcriptionSource=transcriptionAudioContext.createMediaStreamSource(transcriptionStream);
+    transcriptionProcessor=transcriptionAudioContext.createScriptProcessor(4096,1,1);
+    transcriptionChunks=[];
+    transcriptionProcessor.onaudioprocess=e=>{
+      if(!transcriptionStream)return;
+      transcriptionChunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    };
+    transcriptionSource.connect(transcriptionProcessor);
+    transcriptionProcessor.connect(transcriptionAudioContext.destination);
+    transcriptionStartedAt=Date.now();
+    document.getElementById('transcription-btn').textContent='⏹ עצור ותמלל';
+    setTranscriptionStatus('מקליט 00:00',true);
+    transcriptionTimer=setInterval(()=>setTranscriptionStatus('מקליט '+transcriptionElapsed(),true),1000);
+  }catch(err){
+    cleanupRecording();
+    toast('לא ניתן לגשת למיקרופון. יש לאשר הרשאת מיקרופון למרחב הטיפול.','error');
+  }
+}
+async function stopAndTranscribe(){
+  const btn=document.getElementById('transcription-btn');
+  if(btn)btn.disabled=true;
+  if(transcriptionTimer){clearInterval(transcriptionTimer);transcriptionTimer=null;}
+  setTranscriptionStatus('מעבד ומתמלל מקומית…');
+  const chunks=transcriptionChunks.slice();
+  const sourceRate=transcriptionSampleRate;
+  cleanupRecording();
+  try{
+    const wav=encodeWav16k(chunks,sourceRate);
+    const result=await window.api.transcription.transcribe(new Uint8Array(wav));
+    if(!result||!result.ok)throw new Error(result&&result.error||'transcription failed');
+    const area=document.getElementById('fs-transcript');
+    area.value=(area.value.trim()?area.value.trim()+'\n\n':'')+(result.text||'');
+    setTranscriptionStatus('התמלול הושלם ✓');
+    toast('התמלול הושלם ונשאר מקומי במחשב','ok');
+  }catch(err){
+    setTranscriptionStatus('התמלול נכשל');
+    toast('לא ניתן להשלים את התמלול המקומי','error');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='🎙️ התחל הקלטה';}
+  }
+}
+function cleanupRecording(){
+  if(transcriptionProcessor){try{transcriptionProcessor.disconnect();}catch{} transcriptionProcessor=null;}
+  if(transcriptionSource){try{transcriptionSource.disconnect();}catch{} transcriptionSource=null;}
+  if(transcriptionStream){transcriptionStream.getTracks().forEach(t=>t.stop());transcriptionStream=null;}
+  if(transcriptionAudioContext){try{transcriptionAudioContext.close();}catch{} transcriptionAudioContext=null;}
+}
+function encodeWav16k(chunks,inputRate){
+  const total=chunks.reduce((n,a)=>n+a.length,0);
+  const merged=new Float32Array(total);
+  let off=0;for(const a of chunks){merged.set(a,off);off+=a.length;}
+  const outRate=16000,ratio=inputRate/outRate,outLen=Math.floor(merged.length/ratio);
+  const samples=new Float32Array(outLen);
+  for(let i=0;i<outLen;i++){
+    const start=Math.floor(i*ratio),end=Math.min(Math.floor((i+1)*ratio),merged.length);
+    let sum=0,count=0;for(let j=start;j<end;j++){sum+=merged[j];count++;}
+    samples[i]=count?sum/count:0;
+  }
+  const buffer=new ArrayBuffer(44+samples.length*2),view=new DataView(buffer);
+  const str=(o,s)=>{for(let i=0;i<s.length;i++)view.setUint8(o+i,s.charCodeAt(i));};
+  str(0,'RIFF');view.setUint32(4,36+samples.length*2,true);str(8,'WAVE');str(12,'fmt ');
+  view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);
+  view.setUint32(24,outRate,true);view.setUint32(28,outRate*2,true);view.setUint16(32,2,true);view.setUint16(34,16,true);
+  str(36,'data');view.setUint32(40,samples.length*2,true);
+  let p=44;for(const x of samples){const v=Math.max(-1,Math.min(1,x));view.setInt16(p,v<0?v*0x8000:v*0x7fff,true);p+=2;}
+  return buffer;
+}
+
 function openNewSession(){
   clearSessionForm();
   const c=DB.clients.find(x=>x.id===currentClientId);
@@ -1090,7 +1212,8 @@ function openNewSession(){
 }
 function clearSessionForm(){
   document.getElementById('session-modal-title').textContent='מפגש חדש';
-  ['fs-id','fs-date','fs-summary','fs-next'].forEach(id=>document.getElementById(id).value='');
+  ['fs-id','fs-date','fs-summary','fs-next','fs-transcript'].forEach(id=>document.getElementById(id).value='');
+  resetTranscriptionUI();
   document.getElementById('fs-dur').value='50';
   document.getElementById('fs-price').value='';
   document.getElementById('fs-pay').value='לא שולם';
@@ -1105,6 +1228,7 @@ function editSession(id){
   document.getElementById('fs-price').value=s.price||'';
   document.getElementById('fs-pay').value=s.payment||'לא שולם';
   document.getElementById('fs-summary').value=s.summary||'';
+  document.getElementById('fs-transcript').value=s.transcript||'';
   document.getElementById('fs-next').value=s.nextSession||'';
   document.querySelectorAll('#tags-grid .tag-chip').forEach(t=>t.classList.toggle('on',(s.tags||[]).includes(t.textContent)));
   openModal('session');
@@ -1112,7 +1236,7 @@ function editSession(id){
 async function saveSession(){
   const date=document.getElementById('fs-date').value;if(!date){toast('נא לבחור תאריך');return;}
   const sid=document.getElementById('fs-id').value;
-  const obj={clientId:currentClientId,date,duration:parseInt(document.getElementById('fs-dur').value)||50,price:parseInt(document.getElementById('fs-price').value)||0,payment:document.getElementById('fs-pay').value,tags:[...document.querySelectorAll('#tags-grid .tag-chip.on')].map(t=>t.textContent),summary:document.getElementById('fs-summary').value.trim(),nextSession:document.getElementById('fs-next').value.trim()};
+  const obj={clientId:currentClientId,date,duration:parseInt(document.getElementById('fs-dur').value)||50,price:parseInt(document.getElementById('fs-price').value)||0,payment:document.getElementById('fs-pay').value,tags:[...document.querySelectorAll('#tags-grid .tag-chip.on')].map(t=>t.textContent),summary:document.getElementById('fs-summary').value.trim(),transcript:document.getElementById('fs-transcript').value.trim(),nextSession:document.getElementById('fs-next').value.trim()};
   if(sid){const idx=DB.sessions.findIndex(s=>s.id===sid);DB.sessions[idx]={...DB.sessions[idx],...obj};toast('מפגש עודכן ✓','ok');}
   else{obj.id=genId();obj.createdAt=new Date().toISOString();DB.sessions.push(obj);toast('מפגש נשמר ✓','ok');}
   await save();closeModal('session');renderClientView();renderClients();
