@@ -1,8 +1,9 @@
 name: Build Mac & Windows
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ main, local-transcription ]
 
 jobs:
   build-mac:
@@ -11,8 +12,23 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
-      - run: npm install
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build whisper.cpp for Apple Silicon and Intel
+        shell: bash
+        run: |
+          set -e
+          git clone --depth 1 --branch v1.9.4 https://github.com/ggml-org/whisper.cpp.git whisper.cpp
+          cmake -S whisper.cpp -B whisper-arm64 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES=arm64
+          cmake --build whisper-arm64 --config Release --target whisper-cli -j 3
+          cmake -S whisper.cpp -B whisper-x64 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES=x86_64
+          cmake --build whisper-x64 --config Release --target whisper-cli -j 3
+          mkdir -p transcription
+          cp whisper-arm64/bin/whisper-cli transcription/whisper-cli-arm64
+          cp whisper-x64/bin/whisper-cli transcription/whisper-cli-x64
+          chmod +x transcription/whisper-cli-*
+          curl -L --fail --retry 3 -o transcription/ggml-base.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin
       - run: npm run build:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -20,7 +36,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: mac-build
-          path: dist/*.dmg
+          path: |
+            dist/*.dmg
+            dist/*.zip
 
   build-win:
     runs-on: windows-latest
@@ -28,11 +46,22 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
-      - run: npm install
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build whisper.cpp for Windows x64
+        shell: pwsh
+        run: |
+          git clone --depth 1 --branch v1.9.4 https://github.com/ggml-org/whisper.cpp.git whisper.cpp
+          cmake -S whisper.cpp -B whisper-win -A x64 -DBUILD_SHARED_LIBS=OFF
+          cmake --build whisper-win --config Release --target whisper-cli -j 3
+          New-Item -ItemType Directory -Force -Path transcription | Out-Null
+          Copy-Item whisper-win/bin/Release/whisper-cli.exe transcription/whisper-cli.exe
+          Invoke-WebRequest -Uri "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin" -OutFile "transcription/ggml-base.bin"
       - run: npm run build:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
       - uses: actions/upload-artifact@v4
         with:
           name: win-build
