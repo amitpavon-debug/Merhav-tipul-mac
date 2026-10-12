@@ -3,6 +3,10 @@ name: Build Mac & Windows
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build-mac:
@@ -37,3 +41,55 @@ jobs:
         with:
           name: win-build
           path: dist/*.exe
+
+  publish-installers:
+    name: Publish public installers
+    needs: [build-mac, build-win]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download macOS installer
+        uses: actions/download-artifact@v4
+        with:
+          name: mac-build
+          path: installers/mac
+
+      - name: Download Windows installer
+        uses: actions/download-artifact@v4
+        with:
+          name: win-build
+          path: installers/windows
+
+      - name: Prepare fixed public installer names
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public-downloads
+          mapfile -d '' MAC_FILES < <(find installers/mac -type f -name '*.dmg' -print0)
+          mapfile -d '' WIN_FILES < <(find installers/windows -type f -name '*.exe' -print0)
+          if [[ "${#MAC_FILES[@]}" -ne 1 || "${#WIN_FILES[@]}" -ne 1 ]]; then
+            echo "::error::Expected exactly one macOS DMG and one Windows EXE."
+            find installers -type f
+            exit 1
+          fi
+          cp "${MAC_FILES[0]}" public-downloads/Merhav-Tipul-Mac.dmg
+          cp "${WIN_FILES[0]}" public-downloads/Merhav-Tipul-Windows.exe
+          sha256sum public-downloads/* > public-downloads/SHA256SUMS.txt
+          ls -lh public-downloads
+
+      - name: Publish to public GitHub Release (no sign-in required)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="latest-installers"
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "מרחב הטיפול - הורדות Mac ו-Windows" \
+              --notes "מתקינים ציבוריים להורדה ללא חשבון GitHub. להתקנת Mac יש לפתוח קובץ DMG ולהעביר ל-Applications; בגרסה לא חתומה macOS עשוי לבקש אישור פתיחה דרך Privacy & Security."
+          fi
+          gh release upload "$TAG" public-downloads/Merhav-Tipul-Mac.dmg public-downloads/Merhav-Tipul-Windows.exe public-downloads/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --clobber
+          echo "Installers published:"
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets -q '.assets[].url'
